@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS chat_profiles(id TEXT PRIMARY KEY,profile_json TEXT NOT NULL,conversation_summary TEXT NOT NULL DEFAULT '',summary_through INTEGER NOT NULL DEFAULT 0,conversation_count INTEGER NOT NULL DEFAULT 0,message_count INTEGER NOT NULL DEFAULT 0,first_chat_at TEXT NOT NULL,last_chat_at TEXT NOT NULL,relationship_level TEXT NOT NULL DEFAULT 'new');
+CREATE TABLE IF NOT EXISTS recent_messages(seq INTEGER PRIMARY KEY AUTOINCREMENT,user_id TEXT NOT NULL,role TEXT NOT NULL,content TEXT NOT NULL,created_at TEXT NOT NULL,emotion_json TEXT,request_id TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS recent_by_user ON recent_messages(user_id,seq);
+CREATE TABLE IF NOT EXISTS chat_requests(user_id TEXT NOT NULL,request_id TEXT NOT NULL,response_json TEXT NOT NULL,PRIMARY KEY(user_id,request_id));

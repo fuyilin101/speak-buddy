@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "anime-english-mvp",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-05",
+  "observability": { "enabled": true, "traces": { "enabled": true } },
+  "assets": { "directory": "./dist", "binding": "ASSETS" },
+  "vars": { "AI_GATEWAY_URL": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", "AI_MODEL": "qwen-plus", "AI_VISION_MODEL": "qwen3-vl-flash" },
+  "d1_databases": [{ "binding": "DB", "database_name": "english-ai", "database_id": "d5d4a2a5-7a60-476b-99a2-b4ec2236d504" }]
+}
+
+
+

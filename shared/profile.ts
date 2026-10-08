@@ -1,0 +1,8 @@
+export const ages=[{id:'child',title:'儿童学习',range:'10岁以下',description:'轻松、有趣地开始说英语',icon:'🌱'},{id:'teen',title:'青少年成长',range:'10～19岁',description:'边聊天边提升英语',icon:'✨'},{id:'adult',title:'成人实战',range:'20岁及以上',description:'把英语真正用起来',icon:'🌍'}] as const;
+export const levels=[{id:'A1',key:'beginner',title:'入门',label:'Pre-A1 / A1',description:'刚开始学，认识一些简单单词和句子。'},{id:'A2',key:'elementary',title:'基础',label:'A2',description:'能进行一些简单的日常交流。'},{id:'B1',key:'intermediate',title:'中级',label:'B1',description:'能聊大多数日常话题，但表达还不够自然。'},{id:'B2',key:'upper_intermediate',title:'中高级',label:'B2',description:'可以比较流畅地交流，希望说得更自然。'},{id:'C1',key:'advanced',title:'高级',label:'C1+',description:'交流基本没有问题，希望提升地道度和准确性。'}] as const;
+export const goals=[{id:'daily_speaking',title:'日常口语',icon:'💬'},{id:'travel',title:'旅行英语',icon:'✈️'},{id:'work',title:'职场英语',icon:'💼'},{id:'study_abroad',title:'留学英语',icon:'🎓'},{id:'pronunciation',title:'发音',icon:'🎧'},{id:'vocabulary',title:'词汇',icon:'📚'},{id:'grammar',title:'语法',icon:'✍️'},{id:'fluency',title:'流利度',icon:'⚡'}] as const;
+export type LearningProfile={age_group:'child'|'teen'|'adult';english_level:'A1'|'A2'|'B1'|'B2'|'C1';learning_goals:string[];profile_completed:boolean;profile_completed_at?:string};
+export function isLearningProfile(value:unknown):value is LearningProfile{
+ if(!value||typeof value!=='object')return false;const p=value as LearningProfile;
+ return ages.some(a=>a.id===p.age_group)&&levels.some(l=>l.id===p.english_level)&&Array.isArray(p.learning_goals)&&p.learning_goals.length>=1&&p.learning_goals.length<=3&&new Set(p.learning_goals).size===p.learning_goals.length&&p.learning_goals.every(g=>goals.some(x=>x.id===g))&&p.profile_completed===true;
+}
