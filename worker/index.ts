@@ -1,9 +1,10 @@
+import {protectTest} from './testSecurity';
 /// <reference types="@cloudflare/workers-types" />
 import {profileService} from './profileService';
 import {chatService} from './ai/chatService';
 import {chatStreamService} from './ai/streamService';
 /// <reference types="@cloudflare/workers-types" />
-export interface Env { ASSETS: Fetcher; DB?: D1Database; AI_GATEWAY_URL?: string; AI_GATEWAY_TOKEN?: string; AI_MODEL?: string; AI_VISION_MODEL?: string }
+export interface Env { ASSETS: Fetcher; DB?: D1Database; AI_GATEWAY_URL?: string; AI_GATEWAY_TOKEN?: string; AI_MODEL?: string; AI_VISION_MODEL?: string; TEST_LOCKDOWN?: string; ACCESS_ISSUER?: string; ACCESS_AUD?: string; TEST_ALLOWED_EMAIL?: string }
 type Setup= {character:string; companionName:string; nickname:string; ageGroup:string; englishLevel:string};
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json;charset=UTF-8'}});
 const now=()=>new Date().toISOString();
@@ -46,7 +47,7 @@ async function askModel(env:Env, body:{message:string; setup:Setup; history?:unk
     if(attempt<2)await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
   }
   return null;
-}async function askTts(env:Env,text:string){if(!env.AI_GATEWAY_TOKEN||!text)return null; try{const r=await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${env.AI_GATEWAY_TOKEN}`},body:JSON.stringify({model:'qwen3-tts-flash',input:{text:text.slice(0,500),voice:'Serena',language_type:'English'}})}); if(!r.ok)return null; const data=await r.json() as any; return data.output?.audio?.url||null}catch{return null}}export default {async fetch(request:Request,env:Env,ctx:ExecutionContext):Promise<Response>{const url=new URL(request.url); if(url.pathname.startsWith('/api/')){if(url.pathname==='/api/profile'&&(request.method==='GET'||request.method==='POST'))return profileService(request,env);if(request.method==='POST'&&url.pathname==='/api/voice'){
+}async function askTts(env:Env,text:string){if(!env.AI_GATEWAY_TOKEN||!text)return null; try{const r=await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation',{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${env.AI_GATEWAY_TOKEN}`},body:JSON.stringify({model:'qwen3-tts-flash',input:{text:text.slice(0,500),voice:'Serena',language_type:'English'}})}); if(!r.ok)return null; const data=await r.json() as any; return data.output?.audio?.url||null}catch{return null}}export default {async fetch(request:Request,env:Env,ctx:ExecutionContext):Promise<Response>{const protectedRequest=await protectTest(request,env);if(protectedRequest instanceof Response)return protectedRequest;request=protectedRequest;const url=new URL(request.url); if(url.pathname.startsWith('/api/')){if(url.pathname==='/api/profile'&&(request.method==='GET'||request.method==='POST'))return profileService(request,env);if(request.method==='POST'&&url.pathname==='/api/voice'){
  if(Number(request.headers.get('content-length')||0)>6000000)return json({error:'录音过大'},413);
  const body=await request.json() as {audioDataUrl?:string};
  if(typeof body.audioDataUrl!=='string'||!/^data:audio\//.test(body.audioDataUrl)||body.audioDataUrl.length>6000000)return json({error:'录音格式或大小不正确'},400);

@@ -3,16 +3,26 @@
   "name": "anime-english-mvp",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-05",
-  "assets": { "directory": "./dist", "binding": "ASSETS" },
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
   "env": {
     "test": {
       "name": "anime-english-mvp-test",
       "vars": {
         "AI_GATEWAY_URL": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
         "AI_MODEL": "qwen-plus",
-        "AI_VISION_MODEL": "qwen3-vl-flash"
+        "AI_VISION_MODEL": "qwen3-vl-flash",
+        "TEST_LOCKDOWN": "true",
+        "TEST_ALLOWED_EMAIL": "2270110783@qq.com"
       },
-      "secrets": { "required": ["AI_GATEWAY_TOKEN"] },
+      "secrets": {
+        "required": [
+          "AI_GATEWAY_TOKEN"
+        ]
+      },
       "d1_databases": [
         {
           "binding": "DB",
@@ -21,7 +31,14 @@
           "migrations_dir": "migrations"
         }
       ],
-      "observability": { "enabled": true, "traces": { "enabled": true } }
+      "observability": {
+        "enabled": true,
+        "traces": {
+          "enabled": true
+        }
+      },
+      "workers_dev": true,
+      "preview_urls": false
     }
   }
 }
