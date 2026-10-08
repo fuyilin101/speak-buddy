@@ -65,15 +65,23 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
     }
     raw+=decoder.decode();
     const result=normalizeStreamResult(raw,body.message);
-    if(!result){
+    let normalized=result;
+    // Qwen occasionally emits a valid JSON scalar (for example `true`) instead
+    // of the required reply object. Treat this known schema failure as a
+    // deterministic local fallback, while keeping arbitrary/empty corruption
+    // as an error so it is never presented as a successful answer.
+    if(!normalized&&/^(true|false|null)$/i.test(raw.trim())){
+      normalized={hasError:false,errorLevel:'none',original:body.message,corrected:body.message,explanationZh:'',requireRepeat:false,replyZh:'',replyEn:fallbackReply(body.message)};
+      console.warn(JSON.stringify({event:'stream_schema_fallback',request_id:body.requestId,raw_scalar:raw.trim()}));
+    }
+    if(!normalized){
       console.error(JSON.stringify({event:'stream_parse_failed',request_id:body.requestId,raw_length:raw.length,has_reply_key:raw.includes('replyEn'),starts_with:raw.slice(0,24)}));
       throw new Error('流式回复不完整');
     }
-    let normalized=result;
     const userHistory=history.filter((item:any)=>item.role==='user').map((item:any)=>String(item.content||''));
     if(isLowQualityReply(normalized.replyEn,body.message)||isHistoryEcho(normalized.replyEn,userHistory)){
       normalized={...normalized,replyEn:fallbackReply(body.message)};
-      console.log(JSON.stringify({event:'reply_quality_fallback',request_id:body.requestId,original_chars:body.message.length,reply_chars:result.replyEn.length,fallback_chars:normalized.replyEn.length}));
+      console.log(JSON.stringify({event:'reply_quality_fallback',request_id:body.requestId,original_chars:body.message.length,reply_chars:result?.replyEn?.length??0,fallback_chars:normalized.replyEn.length}));
     }
     if(normalized.replyEn.length>visibleReply.length){
       const text=normalized.replyEn.slice(visibleReply.length);

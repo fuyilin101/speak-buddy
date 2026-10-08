@@ -1,5 +1,5 @@
 import type {Env} from './index';
-const deny=(status:number,error:string)=>new Response(JSON.stringify({error}),{status,headers:{'content-type':'application/json','cache-control':'no-store'}});
+const deny=(status:number,error:string,retryAfter?:number)=>new Response(JSON.stringify({error}),{status,headers:{'content-type':'application/json','cache-control':'no-store',...(retryAfter?{'retry-after':String(Math.max(1,Math.ceil(retryAfter)))}:{})}});
 const decode=(s:string)=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(s.length/4)*4,'=')),c=>c.charCodeAt(0));
 export async function protectTest(request:Request,env:Env):Promise<Request|Response>{
  if(env.TEST_LOCKDOWN!=='true')return request;
@@ -19,12 +19,23 @@ export async function protectTest(request:Request,env:Env):Promise<Request|Respo
   const url=new URL(request.url);
   if(url.pathname.startsWith('/api/')&&request.method==='POST'){
    if(Number(request.headers.get('content-length')||0)>8000000)return deny(413,'请求过大');
-   const minute=new Date().toISOString().slice(0,16),day=minute.slice(0,10);
+   const now=new Date(),minute=now.toISOString().slice(0,16),day=minute.slice(0,10);
+   const secondsUntilNextMinute=60-now.getSeconds();
+   const secondsUntilNextDay=86400-(now.getUTCHours()*3600+now.getUTCMinutes()*60+now.getUTCSeconds());
    await env.DB.batch([env.DB.prepare('INSERT OR IGNORE INTO test_usage(bucket,count) VALUES(?,0)').bind(minute),env.DB.prepare('INSERT OR IGNORE INTO test_usage(bucket,count) VALUES(?,0)').bind(day)]);
-   const result=await env.DB.prepare(`UPDATE test_usage SET count=count+1 WHERE bucket=? AND count<20 AND (SELECT count FROM test_usage WHERE bucket=?)<200 RETURNING count`).bind(minute,day).first();
+   const result=await env.DB.prepare(`UPDATE test_usage SET count=count+1 WHERE bucket=? AND count<40 AND (SELECT count FROM test_usage WHERE bucket=?)<400 RETURNING count`).bind(minute,day).first();
    // Initialize both buckets, then retry on the next request. Never allow an uncounted call.
-   if(!result){await env.DB.batch([env.DB.prepare('INSERT OR IGNORE INTO test_usage(bucket,count) VALUES(?,0)').bind(minute),env.DB.prepare('INSERT OR IGNORE INTO test_usage(bucket,count) VALUES(?,0)').bind(day)]);return deny(429,'请求过快或今日测试额度已用完，请稍后重试');}
-   const daily=await env.DB.prepare('UPDATE test_usage SET count=count+1 WHERE bucket=? AND count<200 RETURNING count').bind(day).first();if(!daily)return deny(429,'今日测试额度已用完');
+   if(!result){
+    const [minuteRow,dayRow]=await Promise.all([
+     env.DB.prepare('SELECT count FROM test_usage WHERE bucket=?').bind(minute).first<{count:number}>(),
+     env.DB.prepare('SELECT count FROM test_usage WHERE bucket=?').bind(day).first<{count:number}>()
+    ]);
+    await env.DB.batch([env.DB.prepare('INSERT OR IGNORE INTO test_usage(bucket,count) VALUES(?,0)').bind(minute),env.DB.prepare('INSERT OR IGNORE INTO test_usage(bucket,count) VALUES(?,0)').bind(day)]);
+    if((dayRow?.count??0)>=400)return deny(429,'今日测试额度已用完，请明天再试',secondsUntilNextDay);
+    if((minuteRow?.count??0)>=40)return deny(429,'本分钟测试请求已达40次，请稍后再试',secondsUntilNextMinute);
+    return deny(429,'请求暂时无法处理，请稍后重试',secondsUntilNextMinute);
+   }
+   const daily=await env.DB.prepare('UPDATE test_usage SET count=count+1 WHERE bucket=? AND count<400 RETURNING count').bind(day).first();if(!daily)return deny(429,'今日测试额度已用完，请明天再试',secondsUntilNextDay);
    console.log(JSON.stringify({event:'test_usage',path:url.pathname,minute_count:result.count,day_count:daily.count}));
   }
   // All test profile and chat rows use the verified owner, never the supplied userId.

@@ -8,7 +8,9 @@ export function apiErrorMessage(error:unknown){
 async function checked(response:Response,expected:string){
  if(response.redirected||response.headers.get('content-type')?.includes('text/html'))throw new ApiError('登录已失效，请刷新页面重新登录');
  if(!response.ok){let detail='';try{detail=(await response.json() as {error?:string}).error||''}catch{}
-  throw new ApiError(response.status===429?'请求过快或今日测试额度已用完，请稍后重试':response.status===401||response.status===403?'请刷新页面重新登录':detail||'服务器暂时不可用，请重试',response.status);
+  const retryAfter=response.headers.get('retry-after');
+  const retryHint=retryAfter?`（约 ${retryAfter} 秒后可重试）`:'';
+  throw new ApiError(response.status===429?(detail||'测试请求额度已用完，请稍后重试')+retryHint:response.status===401||response.status===403?'请刷新页面重新登录':detail||'服务器暂时不可用，请重试',response.status);
  }
  if(!response.headers.get('content-type')?.includes(expected))throw new ApiError('服务器返回格式不正确，请重试');
  return response;
