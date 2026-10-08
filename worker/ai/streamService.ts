@@ -5,7 +5,7 @@ import {updateRelationship} from './relationshipManager';
 import {buildPrompt} from './promptBuilder';
 import {loadMemory,saveTurn,saveSummary} from './memoryManager';
 import {callJson,callStream} from './llm';
-import {normalizeStreamResult,partialReply} from './streamParsing';
+import {normalizeStreamResult,partialReply,sanitizeHistory,isLowQualityReply,isHistoryEcho,fallbackReply} from './streamParsing';
 
 type Defer=(promise:Promise<unknown>)=>void;
 async function refreshSummary(env:Env,userId:string,previous:string,messages:Message[],through:number){
@@ -25,9 +25,78 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
  if(cached){const result=JSON.parse(cached.response_json);return new ReadableStream({start(controller){controller.enqueue(event('delta',{text:result.replyEn}));controller.enqueue(event('done',{result}));controller.close();}});}
  const started=performance.now();console.log(JSON.stringify({event:'stream_request_started',request_id:body.requestId}));const memory=await loadMemory(env.DB,body.userId);const profile=memory.state?.profile_completed?JSON.parse(memory.state.profile_json):body.setup;const emotion=analyzeEmotion(body.message);const relationship=updateRelationship(memory.state,new Date().toISOString());
  const summary=memory.summary;const total=memory.state?.message_count||0;const shouldRefreshSummary=total-(memory.state?.summary_through||0)>=40;
- const history=memory.messages.length?memory.messages:(body.history||[]).slice(-40);const systemPrompt=buildPrompt(profile,emotion,relationship,summary);const upstream=await callStream(env,[{role:'system',content:systemPrompt},...history.map((m:any)=>({role:m.role,content:m.content})),{role:'user',content:body.message}],900,requestSignal,body.requestId);
- const reader=upstream.getReader();const decoder=new TextDecoder();let buffer='';let raw='';let reply='';let firstMs:number|null=null;let usage:any=null;let closed=false;
+ const history=sanitizeHistory(memory.messages.length?memory.messages:(body.history||[]).slice(-40));const systemPrompt=buildPrompt(profile,emotion,relationship,summary);const upstream=await callStream(env,[{role:'system',content:systemPrompt},...history.map((m:any)=>({role:m.role,content:m.content})),{role:'user',content:body.message}],900,requestSignal,body.requestId);
+ const reader=upstream.getReader();const decoder=new TextDecoder();let buffer='';let raw='';let reply='';let visibleReply='';let firstMs:number|null=null;let usage:any=null;let closed=false;
  return new ReadableStream({async start(controller){
-  try{while(true){const part=await reader.read();if(part.done)break;buffer+=decoder.decode(part.value,{stream:true});const lines=buffer.split(/\r?\n/);buffer=lines.pop()||'';for(const line of lines){if(!line.startsWith('data:'))continue;const data=line.slice(5).trim();if(!data||data==='[DONE]')continue;let value:any;try{value=JSON.parse(data)}catch{continue;}usage=value.usage||usage;const delta=parseDelta(value);if(!delta)continue;raw+=delta;const next=partialReply(raw);if(next.length>reply.length){const text=next.slice(reply.length);reply=next;if(firstMs===null){firstMs=Math.round(performance.now()-started);console.log(JSON.stringify({event:'stream_timing',request_id:body.requestId,ttft_ms:firstMs,history_messages:history.length}));}controller.enqueue(event('delta',{text}));}}}raw+=decoder.decode();const result=normalizeStreamResult(raw,body.message);if(!result){console.error(JSON.stringify({event:'stream_parse_failed',request_id:body.requestId,raw_length:raw.length,has_reply_key:raw.includes('replyEn'),starts_with:raw.slice(0,24)}));throw new Error('流式回复不完整');}const normalized=result;await saveTurn(db,body.userId,profile,relationship,body.message,normalized,emotion,body.requestId);console.log(JSON.stringify({event:'stream_completed',request_id:body.requestId,ttft_ms:firstMs,complete_ms:Math.round(performance.now()-started),input_tokens:usage?.prompt_tokens??null,output_tokens:usage?.completion_tokens??null,llm_calls:1,saved:true,sse_done:true}));controller.enqueue(event('done',{result:normalized}));controller.close();closed=true;if(shouldRefreshSummary){const summaryMessages:Message[]=[...memory.messages,{role:'user',content:body.message},{role:'assistant',content:normalized.replyEn}];const task=refreshSummary(env,body.userId,memory.summary,summaryMessages,total+2).catch(()=>console.error(JSON.stringify({event:'summary_failed',request_id:body.requestId,deferred:true})));if(defer)defer(task);else void task;}}catch(error){console.error(JSON.stringify({event:'stream_failed',request_id:body.requestId,message:error instanceof Error?error.message:'unknown',saved:false}));if(!closed){controller.enqueue(event('error',{message:'流式回复中断，请重试'}));controller.close();closed=true;}}},cancel(){reader.cancel().catch(()=>{});}});
+  try {
+    while (true) {
+      const part=await reader.read();
+      if(part.done) break;
+      buffer+=decoder.decode(part.value,{stream:true});
+      const lines=buffer.split(/\r?\n/);
+      buffer=lines.pop()||'';
+      for(const line of lines){
+        if(!line.startsWith('data:')) continue;
+        const data=line.slice(5).trim();
+        if(!data||data==='[DONE]') continue;
+        let value:any;
+        try{value=JSON.parse(data)}catch{continue;}
+        usage=value.usage||usage;
+        const delta=parseDelta(value);
+        if(!delta) continue;
+        raw+=delta;
+        const next=partialReply(raw);
+        if(next.length>reply.length){
+          const userHistory=history.filter((item:any)=>item.role==='user').map((item:any)=>String(item.content||''));
+          const wasEcho=Boolean(body.message.trim()&&body.message.trim().toLowerCase().startsWith(next.trim().toLowerCase()))||userHistory.some(item=>item.trim().toLowerCase().startsWith(next.trim().toLowerCase()));
+          const hold=wasEcho||next.trim().toLowerCase()==='like';
+          reply=next;
+          if(!hold){
+            const text=next.slice(visibleReply.length);
+            visibleReply=next;
+            if(firstMs===null){
+              firstMs=Math.round(performance.now()-started);
+              console.log(JSON.stringify({event:'stream_timing',request_id:body.requestId,ttft_ms:firstMs,history_messages:history.length}));
+            }
+            if(text)controller.enqueue(event('delta',{text}));
+          }
+        }
+      }
+    }
+    raw+=decoder.decode();
+    const result=normalizeStreamResult(raw,body.message);
+    if(!result){
+      console.error(JSON.stringify({event:'stream_parse_failed',request_id:body.requestId,raw_length:raw.length,has_reply_key:raw.includes('replyEn'),starts_with:raw.slice(0,24)}));
+      throw new Error('流式回复不完整');
+    }
+    let normalized=result;
+    const userHistory=history.filter((item:any)=>item.role==='user').map((item:any)=>String(item.content||''));
+    if(isLowQualityReply(normalized.replyEn,body.message)||isHistoryEcho(normalized.replyEn,userHistory)){
+      normalized={...normalized,replyEn:fallbackReply(body.message)};
+      console.log(JSON.stringify({event:'reply_quality_fallback',request_id:body.requestId,original_chars:body.message.length,reply_chars:result.replyEn.length,fallback_chars:normalized.replyEn.length}));
+    }
+    if(normalized.replyEn.length>visibleReply.length){
+      const text=normalized.replyEn.slice(visibleReply.length);
+      visibleReply=normalized.replyEn;
+      if(firstMs===null){
+        firstMs=Math.round(performance.now()-started);
+        console.log(JSON.stringify({event:'stream_timing',request_id:body.requestId,ttft_ms:firstMs,history_messages:history.length}));
+      }
+      if(text)controller.enqueue(event('delta',{text}));
+    }
+    await saveTurn(db,body.userId,profile,relationship,body.message,normalized,emotion,body.requestId);
+    console.log(JSON.stringify({event:'stream_completed',request_id:body.requestId,ttft_ms:firstMs,complete_ms:Math.round(performance.now()-started),input_tokens:usage?.prompt_tokens??null,output_tokens:usage?.completion_tokens??null,raw_length:raw.length,reply_chars:normalized.replyEn.length,history_messages:history.length,llm_calls:1,saved:true,sse_done:true}));
+    controller.enqueue(event('done',{result:normalized}));
+    controller.close();
+    closed=true;
+    if(shouldRefreshSummary){
+      const summaryMessages:Message[]=[...memory.messages,{role:'user',content:body.message},{role:'assistant',content:normalized.replyEn}];
+      const task=refreshSummary(env,body.userId,memory.summary,summaryMessages,total+2).catch(()=>console.error(JSON.stringify({event:'summary_failed',request_id:body.requestId,deferred:true})));
+      if(defer)defer(task);else void task;
+    }
+  }catch(error){
+    console.error(JSON.stringify({event:'stream_failed',request_id:body.requestId,message:error instanceof Error?error.message:'unknown',saved:false}));
+    if(!closed){controller.enqueue(event('error',{message:'流式回复中断，请重试'}));controller.close();closed=true;}
+  }},cancel(){reader.cancel().catch(()=>{});}});
 }
 

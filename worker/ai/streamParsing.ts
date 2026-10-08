@@ -12,3 +12,33 @@ export function normalizeStreamResult(raw:string,original:string):StreamReply|nu
  if(value&&typeof value.replyEn==='string'&&value.replyEn.trim())return {...defaults(original),...value};
  return null;
 }
+
+export function isDegenerateReply(text:string){
+ const normalized=text.trim().toLowerCase().replace(/[.!?。！？]+$/g,'');
+ return /^(like|ok|okay|yes|no|yeah|yep|sure|嗯|好|好的)$/.test(normalized);
+}
+
+export function sanitizeHistory<T extends {role:string;content:string}>(messages:T[]){
+ return messages.filter(message=>!(message.role==='assistant'&&isDegenerateReply(message.content)));
+}
+
+export function isLowQualityReply(text:string,original:string){
+ const clean=(value:string)=>value.trim().toLowerCase().replace(/[.!?。！？]+$/g,'').replace(/[“”"']/g,'');
+ const reply=clean(text);const input=clean(original);
+ return isDegenerateReply(text)||Boolean(input&&reply===input);
+}
+
+export function isHistoryEcho(text:string,history:string[]){
+ const clean=(value:string)=>value.trim().toLowerCase().replace(/[.!?。！？]+$/g,'').replace(/[“”"']/g,'');
+ const reply=clean(text);
+ return Boolean(reply&&history.some(item=>clean(item)===reply));
+}
+
+export function fallbackReply(original:string){
+ const text=original.toLowerCase();
+ if(/\b(hello|hi|hey)\b/.test(text))return 'Hi! I’m glad you’re here. How are you feeling today?';
+ if(/\b(like|love|enjoy)\b/.test(text))return 'That sounds nice! What do you like most about it?';
+ if(/\b(exam|test|nervous|worried)\b/.test(text))return 'That sounds stressful. What part worries you most?';
+ if(/^\s*(what|how|where|why|when|can)\b/.test(text))return 'That’s a good question. Tell me a little more about what you mean?';
+ return 'I hear you! Tell me a little more about that.';
+}
