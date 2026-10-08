@@ -18,8 +18,7 @@
 npx wrangler d1 create english-ai-test
 npx wrangler d1 migrations apply english-ai-test --remote --config wrangler.test.jsonc --env test
 npx wrangler versions secret put AI_GATEWAY_TOKEN --name anime-english-mvp-test --config wrangler.test.jsonc --env test
-npm run build
-npx wrangler deploy --config wrangler.test.jsonc --env test
+npm run deploy:test
 ```
 
 `versions secret put` 需要安全地从交互输入或受保护的输入源提供百炼 Key；不要把 Key 放在命令参数、仓库或前端代码中。

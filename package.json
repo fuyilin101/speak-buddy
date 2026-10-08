@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy:test": "npm run build && wrangler deploy --config wrangler.test.jsonc --env test",
     "deploy": "npm run build && wrangler deploy",
     "typecheck": "tsc --noEmit"
   },
