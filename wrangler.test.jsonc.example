@@ -16,7 +16,9 @@
         "AI_MODEL": "qwen-plus",
         "AI_VISION_MODEL": "qwen3-vl-flash",
         "TEST_LOCKDOWN": "true",
-        "TEST_ALLOWED_EMAIL": "2270110783@qq.com"
+        "TEST_ALLOWED_EMAIL": "2270110783@qq.com",
+        "ACCESS_ISSUER": "REPLACE_WITH_ACCESS_TEAM_DOMAIN",
+        "ACCESS_AUD": "REPLACE_WITH_ACCESS_APPLICATION_AUD"
       },
       "secrets": {
         "required": [
