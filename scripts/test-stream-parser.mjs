@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {stripTypeScriptTypes} from 'node:module';
+const js=stripTypeScriptTypes(readFileSync('worker/ai/streamParsing.ts','utf8'),{mode:'transform'});
+const {normalizeStreamResult,partialReply}=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+test('stream parser accepts the normal JSON object',()=>{const r=normalizeStreamResult('{"replyEn":"Hello!","replyZh":"你好"}','hi');assert.equal(r.replyEn,'Hello!');assert.equal(r.replyZh,'你好')});
+test('stream parser accepts Qwen JSON string fallback',()=>{const r=normalizeStreamResult('"Rabbit day"','tell me');assert.equal(r.replyEn,'Rabbit day');assert.equal(r.original,'tell me')});
+test('plain JSON string also streams partial text',()=>{assert.equal(partialReply('"Rabbit day"'),'Rabbit day')});
+test('invalid empty stream remains an error',()=>{assert.equal(normalizeStreamResult('', 'hi'),null);assert.equal(normalizeStreamResult('{"other":1}','hi'),null)});

@@ -13,14 +13,14 @@ export async function callJson(env:Env,messages:{role:string;content:string}[],m
 
 
 export type StreamResult={stream:ReadableStream<Uint8Array>;cancel:()=>void};
-export async function callStream(env:Env,messages:{role:string;content:string}[],maxTokens=900,signal?:AbortSignal){
+export async function callStream(env:Env,messages:{role:string;content:string}[],maxTokens=900,signal?:AbortSignal,requestId?:string){
  const started=performance.now();let attempts=0;
  for(let attempt=0;attempt<2;attempt++){attempts=attempt+1;
   try{const response=await fetch(env.AI_GATEWAY_URL!,{method:'POST',signal:signal||AbortSignal.timeout(30000),headers:{'content-type':'application/json',authorization:`Bearer ${env.AI_GATEWAY_TOKEN}`},body:JSON.stringify({model:env.AI_MODEL||'qwen-plus',messages,max_tokens:maxTokens,temperature:0.65,enable_thinking:false,response_format:{type:'json_object'},stream:true})});
-   if(!response.ok||!response.body){console.error(JSON.stringify({event:'llm_stream_failure',status:response.status,attempt}));if(response.status<500&&response.status!==429)break;continue;}
-   console.log(JSON.stringify({event:'llm_stream_open',elapsed_ms:Math.round(performance.now()-started),attempts}));
+   if(!response.ok||!response.body){console.error(JSON.stringify({event:'llm_stream_failure',request_id:requestId,status:response.status,attempt}));if(response.status<500&&response.status!==429)break;continue;}
+   console.log(JSON.stringify({event:'llm_stream_open',request_id:requestId,elapsed_ms:Math.round(performance.now()-started),attempts}));
    return response.body;
-  }catch(error){console.error(JSON.stringify({event:'llm_stream_exception',attempt,type:error instanceof Error?error.name:'unknown'}));}
+  }catch(error){console.error(JSON.stringify({event:'llm_stream_exception',request_id:requestId,attempt,type:error instanceof Error?error.name:'unknown'}));}
  }
  throw new Error('语言服务暂时不可用');
 }
