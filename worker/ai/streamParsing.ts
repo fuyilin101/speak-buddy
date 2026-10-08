@@ -34,6 +34,12 @@ export function isHistoryEcho(text:string,history:string[]){
  return Boolean(reply&&history.some(item=>clean(item)===reply));
 }
 
+export function isRepeatedAssistantReply(text:string,history:string[]){
+ const clean=(value:string)=>value.trim().toLowerCase().replace(/[.!?。！？]+$/g,'').replace(/[“”"']/g,'');
+ const reply=clean(text);
+ return Boolean(reply&&history.some(item=>clean(item)===reply));
+}
+
 export function fallbackReply(original:string){
  const text=original.toLowerCase();
  if(/\b(hello|hi|hey)\b/.test(text))return 'Hi! I’m glad you’re here. How are you feeling today?';

@@ -5,7 +5,7 @@ import {updateRelationship} from './relationshipManager';
 import {buildPrompt} from './promptBuilder';
 import {loadMemory,saveTurn,saveSummary} from './memoryManager';
 import {callJson,callStream} from './llm';
-import {normalizeStreamResult,partialReply,sanitizeHistory,isLowQualityReply,isHistoryEcho,fallbackReply} from './streamParsing';
+import {normalizeStreamResult,partialReply,sanitizeHistory,isLowQualityReply,isHistoryEcho,isRepeatedAssistantReply,fallbackReply} from './streamParsing';
 
 type Defer=(promise:Promise<unknown>)=>void;
 async function refreshSummary(env:Env,userId:string,previous:string,messages:Message[],through:number){
@@ -79,7 +79,8 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
       throw new Error('流式回复不完整');
     }
     const userHistory=history.filter((item:any)=>item.role==='user').map((item:any)=>String(item.content||''));
-    if(isLowQualityReply(normalized.replyEn,body.message)||isHistoryEcho(normalized.replyEn,userHistory)){
+    const assistantHistory=history.filter((item:any)=>item.role==='assistant').map((item:any)=>String(item.content||''));
+    if(isLowQualityReply(normalized.replyEn,body.message)||isHistoryEcho(normalized.replyEn,userHistory)||isRepeatedAssistantReply(normalized.replyEn,assistantHistory)){
       normalized={...normalized,replyEn:fallbackReply(body.message)};
       console.log(JSON.stringify({event:'reply_quality_fallback',request_id:body.requestId,original_chars:body.message.length,reply_chars:result?.replyEn?.length??0,fallback_chars:normalized.replyEn.length}));
     }
