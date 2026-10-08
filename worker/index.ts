@@ -34,6 +34,23 @@ async function parseModelJson(raw:any){
   const match=cleaned.match(/\{[\s\S]*\}/); if(!match)return null;
   try{const value=JSON.parse(match[0]); if(!value||typeof value.replyEn!=='string')return null; return value;}catch{return null;}
 }
+function parseTranslation(raw:any){
+  const content=raw?.choices?.[0]?.message?.content??raw?.output_text;
+  if(typeof content!=='string')return null;
+  const cleaned=content.replace(/```(?:json)?/gi,'').replace(/```/g,'').trim();
+  const match=cleaned.match(/\{[\s\S]*\}/);
+  if(match){try{const value=JSON.parse(match[0]);if(typeof value?.translation==='string'&&value.translation.trim())return value.translation.trim();}catch{}}
+  return cleaned||null;
+}
+async function askTranslation(env:Env,text:string,setup:Setup){
+  if(!env.AI_GATEWAY_URL||!env.AI_GATEWAY_TOKEN)return null;
+  const prompt=`你是可靠的英语学习翻译器。把用户给出的英文准确翻译成自然、简洁的中文。只翻译原文，不回答问题，不添加解释，不改写语气，不补充原文没有的信息。只返回一个 JSON 对象：{"translation":"中文译文"}。`;
+  try{
+    const response=await fetch(env.AI_GATEWAY_URL,{method:'POST',signal:AbortSignal.timeout(20000),headers:{'content-type':'application/json',authorization:`Bearer ${env.AI_GATEWAY_TOKEN}`},body:JSON.stringify({model:env.AI_MODEL||'qwen-plus',messages:[{role:'system',content:prompt},{role:'user',content:`用户英语水平：${setup.englishLevel}；英文原文：${text}`}],temperature:.1,max_tokens:220,stream:false,enable_thinking:false})});
+    if(!response.ok)return null;
+    return parseTranslation(await response.json());
+  }catch{return null}
+}
 async function askModel(env:Env, body:{message:string; setup:Setup; history?:unknown[]}):Promise<ReturnType<typeof demo>|null>{
   if(!env.AI_GATEWAY_URL||!env.AI_GATEWAY_TOKEN)return null;
   const chineseInput=/[\u4e00-\u9fff]/.test(body.message);
@@ -57,34 +74,8 @@ async function askModel(env:Env, body:{message:string; setup:Setup; history?:unk
  const data=await response.json() as any;const text=data.choices?.[0]?.message?.content;
  if(typeof text!=='string')return json({error:'没有有效识别结果'},502);
  return json({text});}catch{return json({error:'语音识别超时或连接失败'},502)}
- }if(request.method==='GET'&&url.pathname==='/api/health'){return json({ok:true,service:'anime-english-mvp',chatConfigured:Boolean(env.AI_GATEWAY_URL&&env.AI_GATEWAY_TOKEN),time:now()});} if(request.method==='POST'&&url.pathname==='/api/setup'){return json({ok:true,sessionId:crypto.randomUUID()});} if(request.method==='POST'&&url.pathname==='/api/tts'){const body=await request.json() as any; const audioUrl=await askTts(env,String(body.text||'')); return audioUrl?json({audioUrl}):json({error:'tts unavailable'},503);} if(request.method==='POST'&&url.pathname==='/api/vision'){const body=await request.json() as any; if(typeof body.imageDataUrl!=='string'||!body.imageDataUrl.startsWith('data:image/'))return json({error:'imageDataUrl required'},400); if(body.imageDataUrl.length>8000000)return json({error:'image too large'},413); const result=await askVisionModel(env,body)??visionDemo(); return json(result);} if(request.method==='POST'&&url.pathname==='/api/chat/stream'){try{const body=await request.json() as any;if(!body.setup||typeof body.message!=='string'||!body.message.trim()||body.message.length>4000)return json({error:'无效聊天请求'},400);body.userId=/^[-a-zA-Z0-9]{20,80}$/.test(body.userId||'')?body.userId:'legacy-demo-user';body.requestId=/^[-a-zA-Z0-9]{20,80}$/.test(body.requestId||'')?body.requestId:crypto.randomUUID();const stream=await chatStreamService(env,body,request.signal,task=>ctx.waitUntil(task));return new Response(stream,{headers:{'content-type':'text/event-stream;charset=UTF-8','cache-control':'no-cache, no-transform','connection':'keep-alive','x-accel-buffering':'no'}});}catch(error){console.error(JSON.stringify({event:'stream_route_failed',type:error instanceof Error?error.message:'unknown'}));return json({error:'流式聊天暂时不可用'},503);}} if(request.method==='POST'&&url.pathname==='/api/chat'){
+ }if(request.method==='GET'&&url.pathname==='/api/health'){return json({ok:true,service:'anime-english-mvp',chatConfigured:Boolean(env.AI_GATEWAY_URL&&env.AI_GATEWAY_TOKEN),time:now()});} if(request.method==='POST'&&url.pathname==='/api/setup'){return json({ok:true,sessionId:crypto.randomUUID()});} if(request.method==='POST'&&url.pathname==='/api/tts'){const body=await request.json() as any; const audioUrl=await askTts(env,String(body.text||'')); return audioUrl?json({audioUrl}):json({error:'tts unavailable'},503);} if(request.method==='POST'&&url.pathname==='/api/translate'){const body=await request.json() as any;if(typeof body.text!=='string'||!body.text.trim()||body.text.length>4000)return json({error:'无效翻译请求'},400);const translated=await askTranslation(env,body.text.trim(),body.setup||{englishLevel:'未知'});return translated?json({translation:translated}):json({error:'翻译暂时不可用，请重试'},502);} if(request.method==='POST'&&url.pathname==='/api/vision'){const body=await request.json() as any; if(typeof body.imageDataUrl!=='string'||!body.imageDataUrl.startsWith('data:image/'))return json({error:'imageDataUrl required'},400); if(body.imageDataUrl.length>8000000)return json({error:'image too large'},413); const result=await askVisionModel(env,body)??visionDemo(); return json(result);} if(request.method==='POST'&&url.pathname==='/api/chat/stream'){try{const body=await request.json() as any;if(!body.setup||typeof body.message!=='string'||!body.message.trim()||body.message.length>4000)return json({error:'无效聊天请求'},400);body.userId=/^[-a-zA-Z0-9]{20,80}$/.test(body.userId||'')?body.userId:'legacy-demo-user';body.requestId=/^[-a-zA-Z0-9]{20,80}$/.test(body.requestId||'')?body.requestId:crypto.randomUUID();const stream=await chatStreamService(env,body,request.signal,task=>ctx.waitUntil(task));return new Response(stream,{headers:{'content-type':'text/event-stream;charset=UTF-8','cache-control':'no-cache, no-transform','connection':'keep-alive','x-accel-buffering':'no'}});}catch(error){console.error(JSON.stringify({event:'stream_route_failed',type:error instanceof Error?error.message:'unknown'}));return json({error:'流式聊天暂时不可用'},503);}} if(request.method==='POST'&&url.pathname==='/api/chat'){
  try{const body=await request.json() as any;if(!body.setup||typeof body.message!=='string'||!body.message.trim()||body.message.length>4000)return json({error:'无效聊天请求'},400); body.userId=/^[-a-zA-Z0-9]{20,80}$/.test(body.userId||'')?body.userId:'legacy-demo-user'; body.requestId=/^[-a-zA-Z0-9]{20,80}$/.test(body.requestId||'')?body.requestId:crypto.randomUUID();
  return json(await chatService(env,body));}catch(error){console.error(JSON.stringify({event:'chat_failed',type:error instanceof Error?error.message:'unknown'}));return json({error:'聊天暂时失败，请重试；这条消息没有计入对话记忆。'},503);}
  } if(request.method==='GET'&&url.pathname==='/api/mistakes'){if(!env.DB)return json([]); const r=await env.DB.prepare('SELECT * FROM mistakes ORDER BY last_seen DESC').all(); return json(r.results);} return json({error:'Not found'},404);} return env.ASSETS.fetch(request);}};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
