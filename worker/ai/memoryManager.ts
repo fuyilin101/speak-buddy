@@ -1,8 +1,10 @@
 /// <reference types="@cloudflare/workers-types" />
 import type {Message,Profile,Relationship} from './types';
 export async function loadMemory(db:D1Database,id:string){
- const state=await db.prepare('SELECT * FROM chat_profiles WHERE id=?').bind(id).first<any>();
- const rows=await db.prepare('SELECT role,content,created_at AS timestamp FROM recent_messages WHERE user_id=? ORDER BY seq DESC LIMIT 40').bind(id).all<Message>();
+ const [state,rows]=await Promise.all([
+  db.prepare('SELECT * FROM chat_profiles WHERE id=?').bind(id).first<any>(),
+  db.prepare('SELECT role,content,created_at AS timestamp FROM recent_messages WHERE user_id=? ORDER BY seq DESC LIMIT 40').bind(id).all<Message>()
+ ]);
  return {state,messages:rows.results.reverse(),summary:state?.conversation_summary||''};
 }
 export async function saveTurn(db:D1Database,id:string,profile:Profile,relationship:Relationship,message:string,result:any,emotion:any,requestId:string){
