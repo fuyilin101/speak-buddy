@@ -16,7 +16,7 @@ export async function saveTurn(db:D1Database,id:string,profile:Profile,relations
  db.prepare('INSERT INTO chat_requests(user_id,request_id,response_json) VALUES(?,?,?)').bind(id,requestId,JSON.stringify(result))]);
 }
 export async function saveSummary(db:D1Database,id:string,summary:string,through:number){
- await db.batch([db.prepare('UPDATE chat_profiles SET conversation_summary=?,summary_through=? WHERE id=?').bind(summary.slice(0,4000),through,id),db.prepare('DELETE FROM recent_messages WHERE user_id=? AND seq NOT IN (SELECT seq FROM recent_messages WHERE user_id=? ORDER BY seq DESC LIMIT 40)').bind(id,id)]);
+ await db.batch([db.prepare('UPDATE chat_profiles SET conversation_summary=?,summary_through=? WHERE id=? AND summary_through<?').bind(summary.slice(0,4000),through,id,through),db.prepare('DELETE FROM recent_messages WHERE user_id=? AND seq NOT IN (SELECT seq FROM recent_messages WHERE user_id=? ORDER BY seq DESC LIMIT 40)').bind(id,id)]);
 }
 
 
