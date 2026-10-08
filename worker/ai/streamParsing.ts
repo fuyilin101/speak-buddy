@@ -25,7 +25,8 @@ export function sanitizeHistory<T extends {role:string;content:string}>(messages
 export function isLowQualityReply(text:string,original:string){
  const clean=(value:string)=>value.trim().toLowerCase().replace(/[.!?。！？]+$/g,'').replace(/[“”"']/g,'');
  const reply=clean(text);const input=clean(original);
- return isDegenerateReply(text)||Boolean(input&&reply===input);
+ const loneEnglishWord=/^[a-z]+$/.test(reply)&&reply.length<=32;
+ return isDegenerateReply(text)||loneEnglishWord||Boolean(input&&reply===input);
 }
 
 export function isHistoryEcho(text:string,history:string[]){
