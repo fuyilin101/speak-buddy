@@ -19,8 +19,18 @@ export function isDegenerateReply(text:string){
 }
 
 export function sanitizeHistory<T extends {role:string;content:string}>(messages:T[]){
- return messages.filter(message=>!(message.role==='assistant'&&isDegenerateReply(message.content)));
+ return messages.filter(message=>!(message.role==='assistant'&&(
+  /^[a-z]+[.!?]?$/i.test(message.content.trim())||isDegenerateReply(message.content)||
+  /^(I hear you[!.]|That sounds nice! What do you like most|That’s a good question\. Tell me|That sounds stressful\. What part|Hi! I’m glad you’re here\.|I’m listening\.|That sounds interesting\. Can you)/.test(message.content)
+ )));
 }
+
+// JSON-mode conversation examples must use the same output format as the
+// next assistant turn. Keep every user message, including short vocabulary.
+export function modelHistory<T extends {role:string;content:string}>(messages:T[]){
+ return sanitizeHistory(messages).map(message=>({role:message.role,content:message.role==='assistant'?JSON.stringify({replyEn:message.content,hasError:false,replyZh:''}):message.content}));
+}
+export function isSingleEnglishWord(text:string){return /^[A-Za-z]+$/.test(text.trim());}
 
 export function isLowQualityReply(text:string,original:string){
  const clean=(value:string)=>value.trim().toLowerCase().replace(/[.!?。！？]+$/g,'').replace(/[“”"']/g,'');
@@ -47,5 +57,9 @@ export function fallbackReply(original:string){
  if(/\b(like|love|enjoy)\b/.test(text))return 'That sounds nice! What do you like most about it?';
  if(/\b(exam|test|nervous|worried)\b/.test(text))return 'That sounds stressful. What part worries you most?';
  if(/^\s*(what|how|where|why|when|can)\b/.test(text))return 'That’s a good question. Tell me a little more about what you mean?';
- return 'I hear you! Tell me a little more about that.';
+ if(/[妈妈母亲家人爸爸妈妈]/.test(original))return 'You’re talking about your family. What would you like to tell me about them?';
+ if(!/[a-z]/i.test(original))return 'I’m listening. Try a short English sentence, like “I feel happy today.”';
+ const choices=['I hear you. Tell me a little more about that.','I’m listening. What happened next?','That sounds interesting. Can you say a little more?'];
+ const index=[...original].reduce((sum,char)=>sum+char.charCodeAt(0),0)%choices.length;
+ return choices[index];
 }
