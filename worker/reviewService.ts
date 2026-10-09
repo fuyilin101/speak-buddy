@@ -27,13 +27,15 @@ async function invite(db:D1Database,userId:string,manual=false){
   if((!manual&&pref?.enabled===0)||(!manual&&pref?.last_invited_day===day)||(!manual&&pref?.snoozed_day===day))return state(db,userId);
   const existing=await db.prepare(`SELECT * FROM review_sessions WHERE user_id=? AND day=? AND status IN ('invited','active') LIMIT 1`).bind(userId,day).first<any>();
   if(existing){const rec=await recordFor(db,userId,existing.record_id);return {enabled:true,session:publicSession(existing,rec)};}
-  const due=await db.prepare(`SELECT id,original_text AS originalText,suggested_text AS suggestedText,learning_type AS type,focus_point AS focusPoint,explanation_zh AS explanationZh,status,review_count AS reviewCount,next_review_at AS nextReviewAt,correct_streak AS correctStreak,correct_count AS correctCount,incorrect_count AS incorrectCount FROM learning_records WHERE user_id=? AND status='review' AND (next_review_at IS NULL OR next_review_at<=?) ORDER BY incorrect_count DESC,review_count ASC,updated_at ASC LIMIT 1`).bind(userId,now).first<RecordRow>();
-  if(!due)return state(db,userId);
+  const columns=`id,original_text AS originalText,suggested_text AS suggestedText,learning_type AS type,focus_point AS focusPoint,explanation_zh AS explanationZh,status,review_count AS reviewCount,next_review_at AS nextReviewAt,correct_streak AS correctStreak,correct_count AS correctCount,incorrect_count AS incorrectCount`;
+  const due=await db.prepare(`SELECT ${columns} FROM learning_records WHERE user_id=? AND (status='review' OR status IS NULL) AND (next_review_at IS NULL OR next_review_at<=?) ORDER BY incorrect_count DESC,review_count ASC,updated_at ASC LIMIT 1`).bind(userId,now).first<RecordRow>();
+  const available=due||await db.prepare(`SELECT ${columns} FROM learning_records WHERE user_id=? AND (status='review' OR status IS NULL) ORDER BY incorrect_count DESC,review_count ASC,updated_at ASC LIMIT 1`).bind(userId).first<RecordRow>();
+  if(!available)return state(db,userId);
   const sid=`review-${crypto.randomUUID()}`;
   await db.batch([
     db.prepare(`INSERT OR IGNORE INTO review_preferences(user_id,enabled,last_invited_day,snoozed_day,updated_at) VALUES(?,1,?,?,?)`).bind(userId,day,null,now),
     db.prepare(`UPDATE review_preferences SET last_invited_day=?,updated_at=? WHERE user_id=? AND enabled=1`).bind(day,now,userId),
-    db.prepare(`INSERT OR IGNORE INTO review_sessions(id,user_id,record_id,day,question_number,question,status,created_at,updated_at) VALUES(?,?,?,?,1,?,'invited',?,?)`).bind(sid,userId,due.id,day,questionFor(due),now,now)
+    db.prepare(`INSERT OR IGNORE INTO review_sessions(id,user_id,record_id,day,question_number,question,status,created_at,updated_at) VALUES(?,?,?,?,1,?,'invited',?,?)`).bind(sid,userId,available.id,day,questionFor(available),now,now)
   ]);
   const session=await db.prepare(`SELECT * FROM review_sessions WHERE user_id=? AND day=? AND status IN ('invited','active') ORDER BY created_at DESC LIMIT 1`).bind(userId,day).first<any>();
   const rec=session?await recordFor(db,userId,session.record_id):null;
