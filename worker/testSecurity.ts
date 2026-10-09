@@ -67,10 +67,11 @@ export async function protectTest(request: Request, env: Env): Promise<Request |
     console.log(JSON.stringify({ event: 'test_usage', path: url.pathname, subject: env.PUBLIC_GUEST_MODE === 'true' ? 'guest' : 'access', minute_count: perVisitor.minute, day_count: perVisitor.day }));
   }
   url.searchParams.set('userId', ownerId);
-  if (request.method === 'POST' && ['/api/profile', '/api/chat', '/api/chat/stream', '/api/learning', '/api/review'].includes(url.pathname)) {
+  if (request.method === 'POST' && ['/api/profile', '/api/chat', '/api/chat/stream', '/api/learning', '/api/review', '/api/practice'].includes(url.pathname)) {
     const body = await request.json() as Record<string, unknown>;
     body.userId = ownerId;
     return new Request(url, { method: request.method, headers: request.headers, body: JSON.stringify(body), signal: request.signal });
   }
   return new Request(url, request);
 }
+
