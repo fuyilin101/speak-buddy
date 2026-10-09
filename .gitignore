@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .wrangler/
+.local-backups/
 
 # Local secrets and environment files
 .env*
