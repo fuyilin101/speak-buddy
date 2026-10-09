@@ -44,7 +44,7 @@ async function evaluate(env:Env,question:string,answer:string,record:any,request
   const response=await fetch(env.AI_GATEWAY_URL,{method:'POST',signal:AbortSignal.timeout(12000),headers:{'content-type':'application/json',authorization:`Bearer ${env.AI_GATEWAY_TOKEN}`},body:JSON.stringify({model:env.AI_CHAT_MODEL||env.AI_MODEL||'qwen3.7-flash',messages:[{role:'system',content:'Grade the answer safely and return strict JSON.'},{role:'user',content:prompt}],max_tokens:220,temperature:.1,enable_thinking:false,response_format:{type:'json_object'}})});
   if(!response.ok)throw new Error(`grading ${response.status}`);
   const raw=await response.json() as any; const content=raw.choices?.[0]?.message?.content;
-  let parsed:any; try{parsed=JSON.parse(typeof content==='string'?content.match(/\{[\s\S]*\}/)?.[0]||content:'');}catch{throw new Error('grading format');}
+  let parsed:any; try{parsed=JSON.parse(typeof content==='string'?content.match(/\{[\s\S]*\}/)?.[0]||content:'');if(typeof parsed==='string')parsed=JSON.parse(parsed);}catch{throw new Error('grading format');}
   const verdict=parsed?.verdict==='correct'||parsed?.verdict==='incorrect'||parsed?.verdict==='uncertain'?parsed.verdict:'uncertain';
   return {verdict,feedback:clean(parsed.feedback,500)||'Let’s look at that together.',explanationZh:clean(parsed.explanationZh,500)};
 }
