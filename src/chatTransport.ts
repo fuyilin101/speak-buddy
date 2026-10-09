@@ -1,5 +1,5 @@
 export class ApiError extends Error {
- constructor(message:string,public status=0){super(message)}
+  constructor(message:string,public status=0,public code?:string){super(message)}
 }
 export function apiErrorMessage(error:unknown){
  if(error instanceof DOMException&&error.name==='AbortError')return '网络超时，请重试';
@@ -26,7 +26,7 @@ export async function requestChatStream(payload:unknown,onDelta:(text:string)=>v
   const response=await checked(await fetch('/api/chat/stream',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream'},body:JSON.stringify(payload),signal:controller.signal}),'text/event-stream');
   if(!response.body)throw new ApiError('回复连接没有建立，请重试');
   reader=response.body.getReader();const decoder=new TextDecoder();let buffer='';let result:any=null;
-  const consume=(block:string)=>{let type='message';const lines:string[]=[];for(const line of block.split(/\r?\n/)){if(line.startsWith('event:'))type=line.slice(6).trim();if(line.startsWith('data:'))lines.push(line.slice(5).trim())}if(!lines.length)return;const data=JSON.parse(lines.join('\n'));if(type==='delta'&&typeof data.text==='string')onDelta(data.text);if(type==='done')result=data.result;if(type==='error')throw new ApiError(data.message||'流式回复中断，请重试');};
+   const consume=(block:string)=>{let type='message';const lines:string[]=[];for(const line of block.split(/\r?\n/)){if(line.startsWith('event:'))type=line.slice(6).trim();if(line.startsWith('data:'))lines.push(line.slice(5).trim())}if(!lines.length)return;const data=JSON.parse(lines.join('\n'));if(type==='delta'&&typeof data.text==='string')onDelta(data.text);if(type==='done')result=data.result;if(type==='error')throw new ApiError(data.message||'流式回复中断，请重试',0,data.code);};
   while(true){const part=await reader.read();if(part.done){buffer+=decoder.decode();break}buffer+=decoder.decode(part.value,{stream:true});const blocks=buffer.split(/\r?\n\r?\n/);buffer=blocks.pop()||'';for(const block of blocks)consume(block)}
   if(buffer.trim())consume(buffer);if(!result||typeof result.replyEn!=='string')throw new ApiError('回复中断，请重试');return result;
  }finally{clearTimeout(timer);controller.abort();await reader?.cancel().catch(()=>{});reader?.releaseLock();}

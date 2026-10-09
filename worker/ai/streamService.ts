@@ -26,7 +26,7 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
  const started=performance.now();console.log(JSON.stringify({event:'stream_request_started',request_id:body.requestId}));const memory=await loadMemory(env.DB,body.userId);const profile=memory.state?.profile_completed?JSON.parse(memory.state.profile_json):body.setup;const emotion=analyzeEmotion(body.message);const relationship=updateRelationship(memory.state,new Date().toISOString());
  const summary=memory.summary;const total=memory.state?.message_count||0;const shouldRefreshSummary=total-(memory.state?.summary_through||0)>=40;
  const history=sanitizeHistory(memory.messages.length?memory.messages:(body.history||[]).slice(-40));const systemPrompt=buildPrompt(profile,emotion,relationship,summary);const vocabularyInstruction=isSingleEnglishWord(body.message)?{role:'system',content:'The user sent exactly one English word for vocabulary practice. Define that word in simple English, give one short example sentence, and ask one related question. Your replyEn must contain the meaning and example; never merely repeat the word.'}:null;const upstream=await callStream(env,[{role:'system',content:systemPrompt},...modelHistory(history),...(vocabularyInstruction?[vocabularyInstruction]:[]),{role:'user',content:body.message}],900,requestSignal,body.requestId);
- const reader=upstream.getReader();const decoder=new TextDecoder();let buffer='';let raw='';let reply='';let visibleReply='';let firstMs:number|null=null;let usage:any=null;let closed=false;
+ const reader=upstream.getReader();const decoder=new TextDecoder();let buffer='';let raw='';let reply='';let visibleReply='';let firstMs:number|null=null;let usage:any=null;let closed=false;let persistenceFailure=false;
  return new ReadableStream({async start(controller){
   try {
     while (true) {
@@ -94,7 +94,7 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
       }
       if(text)controller.enqueue(event('delta',{text}));
     }
-    await saveTurn(db,body.userId,profile,relationship,body.message,normalized,emotion,body.requestId);
+    try{await saveTurn(db,body.userId,profile,relationship,body.message,normalized,emotion,body.requestId);}catch(error){persistenceFailure=true;throw error;}
     if(normalized.learningFeedback?.type==='grammar'){
       try{
         const recordId=await saveLearningRecord(db,body.userId,body.requestId,normalized.learningFeedback);
@@ -112,7 +112,7 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
     }
   }catch(error){
     console.error(JSON.stringify({event:'stream_failed',request_id:body.requestId,message:error instanceof Error?error.message:'unknown',saved:false}));
-    if(!closed){controller.enqueue(event('error',{message:'流式回复中断，请重试'}));controller.close();closed=true;}
+    if(!closed){controller.enqueue(event('error',{message:persistenceFailure?'回复已生成，但保存失败，请稍后刷新重试':'流式回复中断，请重试',code:persistenceFailure?'persistence_failed':'stream_failed'}));controller.close();closed=true;}
   }},cancel(){reader.cancel().catch(()=>{});}});
 }
 
