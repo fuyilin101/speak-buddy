@@ -33,7 +33,7 @@ async function verify(token: string, secret: string) {
     const valid = await crypto.subtle.verify('HMAC', await key(secret), signature, new TextEncoder().encode(payload));
     if (!valid) return null;
     const parsed = JSON.parse(payload) as { id?: string; exp?: number };
-    if (!parsed.id || !/^guest_[0-9a-f-]{36}$/.test(parsed.id) || !parsed.exp || parsed.exp <= Math.floor(Date.now() / 1000)) return null;
+    if (!parsed.id || !/^guest-[0-9a-f-]{36}$/.test(parsed.id) || !parsed.exp || parsed.exp <= Math.floor(Date.now() / 1000)) return null;
     return parsed.id;
   } catch {
     return null;
@@ -50,7 +50,7 @@ export async function getGuestId(request: Request, secret?: string) {
 }
 
 export async function createGuestCookie(secret: string, ttlSeconds = DEFAULT_TTL_SECONDS) {
-  const id = `guest_${crypto.randomUUID()}`;
+  const id = `guest-${crypto.randomUUID()}`;
   const payload = JSON.stringify({ id, exp: Math.floor(Date.now() / 1000) + ttlSeconds });
   const token = await sign(payload, secret);
   return { id, header: `${COOKIE_NAME}=${token}; Max-Age=${ttlSeconds}; Path=/; HttpOnly; Secure; SameSite=Lax` };
