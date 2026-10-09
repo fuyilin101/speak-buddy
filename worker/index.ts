@@ -4,7 +4,7 @@ import {profileService} from './profileService';
 import {chatService} from './ai/chatService';
 import {chatStreamService} from './ai/streamService';
 /// <reference types="@cloudflare/workers-types" />
-export interface Env { ASSETS: Fetcher; DB?: D1Database; AI_GATEWAY_URL?: string; AI_GATEWAY_TOKEN?: string; AI_MODEL?: string; AI_VISION_MODEL?: string; TEST_LOCKDOWN?: string; ACCESS_ISSUER?: string; ACCESS_AUD?: string; TEST_ALLOWED_EMAIL?: string }
+export interface Env { ASSETS: Fetcher; DB?: D1Database; AI_GATEWAY_URL?: string; AI_GATEWAY_TOKEN?: string; AI_MODEL?: string; AI_CHAT_MODEL?: string; AI_TRANSLATION_MODEL?: string; AI_SUMMARY_MODEL?: string; AI_VISION_MODEL?: string; TEST_LOCKDOWN?: string; ACCESS_ISSUER?: string; ACCESS_AUD?: string; TEST_ALLOWED_EMAIL?: string }
 type Setup= {character:string; companionName:string; nickname:string; ageGroup:string; englishLevel:string};
 const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json;charset=UTF-8'}});
 const now=()=>new Date().toISOString();
@@ -42,11 +42,16 @@ function parseTranslation(raw:any){
   if(match){try{const value=JSON.parse(match[0]);if(typeof value?.translation==='string'&&value.translation.trim())return value.translation.trim();}catch{}}
   return cleaned||null;
 }
-async function askTranslation(env:Env,text:string,setup:Setup){
+async function askTranslation(env:Env,text:string,_setup:Setup){
   if(!env.AI_GATEWAY_URL||!env.AI_GATEWAY_TOKEN)return null;
-  const prompt=`你是可靠的英语学习翻译器。把用户给出的英文准确翻译成自然、简洁的中文。只翻译原文，不回答问题，不添加解释，不改写语气，不补充原文没有的信息。只返回一个 JSON 对象：{"translation":"中文译文"}。`;
+  const translationModel=env.AI_TRANSLATION_MODEL||'qwen-mt-flash';
   try{
-    const response=await fetch(env.AI_GATEWAY_URL,{method:'POST',signal:AbortSignal.timeout(20000),headers:{'content-type':'application/json',authorization:`Bearer ${env.AI_GATEWAY_TOKEN}`},body:JSON.stringify({model:env.AI_MODEL||'qwen-plus',messages:[{role:'system',content:prompt},{role:'user',content:`用户英语水平：${setup.englishLevel}；英文原文：${text}`}],temperature:.1,max_tokens:220,stream:false,enable_thinking:false})});
+    const response=await fetch(env.AI_GATEWAY_URL,{method:'POST',signal:AbortSignal.timeout(20000),headers:{'content-type':'application/json',authorization:`Bearer ${env.AI_GATEWAY_TOKEN}`},body:JSON.stringify({model:translationModel,messages:[{role:'user',content:text}],translation_options:{source_lang:'English',target_lang:'Chinese'},max_tokens:220,stream:false})});
+    if(response.ok){const translation=parseTranslation(await response.json());if(translation)return translation;}
+  }catch{}
+  // Keep qwen-plus as a service fallback if the dedicated MT model is unavailable.
+  try{
+    const response=await fetch(env.AI_GATEWAY_URL,{method:'POST',signal:AbortSignal.timeout(20000),headers:{'content-type':'application/json',authorization:`Bearer ${env.AI_GATEWAY_TOKEN}`},body:JSON.stringify({model:env.AI_MODEL||'qwen-plus',messages:[{role:'system',content:'Translate the user English into concise natural Chinese. Return only JSON: {"translation":"..."}.'},{role:'user',content:text}],temperature:.1,max_tokens:220,stream:false,enable_thinking:false,response_format:{type:'json_object'}})});
     if(!response.ok)return null;
     return parseTranslation(await response.json());
   }catch{return null}
