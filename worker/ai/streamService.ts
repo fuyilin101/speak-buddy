@@ -5,7 +5,6 @@ import {updateRelationship} from './relationshipManager';
 import {buildPrompt} from './promptBuilder';
 import {loadMemory,saveTurn,saveSummary,saveLearningRecord} from './memoryManager';
 import {callJson,callStream} from './llm';
-import {recordChat} from '../growthService';
 import {normalizeStreamResult,partialReply,sanitizeHistory,modelHistory,isSingleEnglishWord,isLowQualityReply,isHistoryEcho,isRepeatedAssistantReply,fallbackReply} from './streamParsing';
 
 type Defer=(promise:Promise<unknown>)=>void;
@@ -96,7 +95,6 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
       if(text)controller.enqueue(event('delta',{text}));
     }
     try{await saveTurn(db,body.userId,profile,relationship,body.message,normalized,emotion,body.requestId);}catch(error){persistenceFailure=true;throw error;}
-    try{await recordChat(env,body.userId,body.requestId,body.message);}catch(error){console.error(JSON.stringify({event:'growth_award_failed',request_id:body.requestId,type:error instanceof Error?error.name:'unknown'}));}
     if(normalized.learningFeedback?.type==='grammar'){
       try{
         const recordId=await saveLearningRecord(db,body.userId,body.requestId,normalized.learningFeedback);

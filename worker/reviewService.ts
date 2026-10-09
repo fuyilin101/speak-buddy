@@ -9,9 +9,9 @@ type RecordRow={id:string;originalText:string;suggestedText:string;type:'grammar
 
 function questionFor(r:RecordRow){
   const level=/past|过去|时态|tense/i.test(`${r.focusPoint} ${r.explanationZh} ${r.originalText}`);
-  if(r.type==='grammar'&&level)return 'Tell me one short thing you did yesterday using the past tense.';
-  if(r.type==='grammar')return `Make one short English sentence using the grammar point: ${r.focusPoint||'the corrected form'}.`;
-  return 'Please say this idea naturally in English, using your own words.';
+  if(r.type==='grammar'&&level)return '请用英文表达：我昨天去了公园。注意使用 go 的正确过去式。';
+  if(r.type==='grammar')return `请用英文造句，练习这个知识点：${r.focusPoint||r.suggestedText||'把原句说得更自然'}`;
+  return `请用英文表达这个意思：“${r.originalText}”。尽量保留原意，不要逐字翻译。`;
 }
 function publicSession(row:any,record:any){return row?{id:row.id,question:row.question,questionNumber:row.question_number,status:row.status,record:{id:record?.id,type:record?.learning_type,focusPoint:record?.focus_point}}:null;}
 async function recordFor(db:D1Database,userId:string,id:string){return await db.prepare(`SELECT id,original_text AS originalText,suggested_text AS suggestedText,learning_type AS type,focus_point AS focusPoint,explanation_zh AS explanationZh,status,review_count AS reviewCount,next_review_at AS nextReviewAt,correct_streak AS correctStreak,correct_count AS correctCount,incorrect_count AS incorrectCount,last_correct_day AS lastCorrectDay FROM learning_records WHERE id=? AND user_id=?`).bind(id,userId).first<RecordRow>();}
@@ -21,10 +21,10 @@ async function state(db:D1Database,userId:string){
   const record=session?await recordFor(db,userId,session.record_id):null;
   return {enabled:pref?.enabled!==0,session:publicSession(session,record)};
 }
-async function invite(db:D1Database,userId:string){
+async function invite(db:D1Database,userId:string,manual=false){
   const day=dayShanghai(),now=new Date().toISOString();
   const pref=await db.prepare('SELECT enabled,last_invited_day,snoozed_day FROM review_preferences WHERE user_id=?').bind(userId).first<any>();
-  if(pref?.enabled===0||pref?.last_invited_day===day||pref?.snoozed_day===day)return state(db,userId);
+  if((!manual&&pref?.enabled===0)||(!manual&&pref?.last_invited_day===day)||(!manual&&pref?.snoozed_day===day))return state(db,userId);
   const existing=await db.prepare(`SELECT * FROM review_sessions WHERE user_id=? AND day=? AND status IN ('invited','active') LIMIT 1`).bind(userId,day).first<any>();
   if(existing){const rec=await recordFor(db,userId,existing.record_id);return {enabled:true,session:publicSession(existing,rec)};}
   const due=await db.prepare(`SELECT id,original_text AS originalText,suggested_text AS suggestedText,learning_type AS type,focus_point AS focusPoint,explanation_zh AS explanationZh,status,review_count AS reviewCount,next_review_at AS nextReviewAt,correct_streak AS correctStreak,correct_count AS correctCount,incorrect_count AS incorrectCount FROM learning_records WHERE user_id=? AND status='review' AND (next_review_at IS NULL OR next_review_at<=?) ORDER BY incorrect_count DESC,review_count ASC,updated_at ASC LIMIT 1`).bind(userId,now).first<RecordRow>();
@@ -54,7 +54,7 @@ export async function reviewService(request:Request,env:Env){
   try{
     if(request.method==='GET')return out(await state(env.DB,userId));
     const body=await request.json() as any; const action=clean(body.action,30); const now=new Date().toISOString();
-    if(action==='check')return out(await invite(env.DB,userId));
+    if(action==='check')return out(await invite(env.DB,userId,body.manual===true));
     if(action==='toggle'){const enabled=body.enabled!==false;await env.DB.batch([env.DB.prepare(`INSERT INTO review_preferences(user_id,enabled,updated_at) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled,updated_at=excluded.updated_at`).bind(userId,enabled?1:0,now),...(enabled?[]:[env.DB.prepare(`UPDATE review_sessions SET status='cancelled',updated_at=? WHERE user_id=? AND status IN ('invited','active')`).bind(now,userId)])]);return out(await state(env.DB,userId));}
     if(action==='snooze'){await env.DB.prepare(`INSERT INTO review_preferences(user_id,enabled,snoozed_day,updated_at) VALUES(?,1,?,?) ON CONFLICT(user_id) DO UPDATE SET snoozed_day=excluded.snoozed_day,updated_at=excluded.updated_at`).bind(userId,dayShanghai(),now).run();await env.DB.prepare(`UPDATE review_sessions SET status='skipped',updated_at=? WHERE user_id=? AND status IN ('invited','active')`).bind(now,userId).run();return out(await state(env.DB,userId));}
     const sessionId=clean(body.sessionId,80); const session=await env.DB.prepare(`SELECT * FROM review_sessions WHERE id=? AND user_id=? AND status IN ('invited','active')`).bind(sessionId,userId).first<any>(); if(!session)return out({error:'复习会话已结束，请重新开始'},409);
