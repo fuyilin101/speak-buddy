@@ -1,12 +1,13 @@
 import React,{useEffect,useState} from 'react';
 
-type Props={userId:string;busy:boolean;onAnswerText?:(text:string)=>void};
+type Props={userId:string;busy:boolean;registerVoiceAnswer?:(handler:(text:string)=>void)=>()=>void};
 type ReviewState={enabled:boolean;session?:{id:string;question:string;questionNumber:number;status:string}|null};
-export default function ReviewWidget({userId,busy}:Props){
+export default function ReviewWidget({userId,busy,registerVoiceAnswer}:Props){
  const [state,setState]=useState<ReviewState|null>(null);const [answer,setAnswer]=useState('');const [phase,setPhase]=useState<'idle'|'answering'|'result'>('idle');const [result,setResult]=useState<any>(null);const [error,setError]=useState('');
  async function post(body:any):Promise<any>{const r=await fetch('/api/review',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const d:any=await r.json().catch(()=>({error:'请求失败'}));if(!r.ok)throw new Error(d.error||'请求失败');return d;}
  async function refresh(){try{const d=await post({action:'check'});setState(d);if(d.session)setPhase('answering');}catch{} }
  useEffect(()=>{if(!busy)void refresh();},[busy]);
+ useEffect(()=>registerVoiceAnswer?.(text=>{setAnswer(text);setPhase('answering');setError('')}),[registerVoiceAnswer]);
  if(!state)return null;
  if(!state.enabled)return <div className="review-settings"><button onClick={async()=>{try{const d=await post({action:'toggle',enabled:true});setState(d);await refresh();}catch(e){setError(e instanceof Error?e.message:'无法开启复习')}}}>开启角色主动复习</button></div>;
  if(!state.session)return null;
