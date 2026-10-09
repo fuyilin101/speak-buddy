@@ -1,0 +1,11 @@
+import React,{useEffect,useState} from 'react';
+import type {LearningFeedback} from './LearningCard';
+type RecordItem=LearningFeedback&{id:string;sourceMessageId:string;status:string;reviewCount:number;createdAt:string;updatedAt:string};
+type Props={onBack:()=>void;userId:string};
+export default function LearningPanel({onBack,userId}:Props){
+ const [items,setItems]=useState<RecordItem[]>([]);const [loading,setLoading]=useState(true);const [error,setError]=useState('');
+ const load=async()=>{setLoading(true);setError('');try{const r=await fetch('/api/learning?userId='+encodeURIComponent(userId),{credentials:'same-origin',cache:'no-store'});const d=await r.json() as any;if(!r.ok)throw new Error(d.error||'读取学习记录失败');setItems(Array.isArray(d)?d:[])}catch(e){setError(e instanceof Error?e.message:'读取失败，请重试')}finally{setLoading(false)}};
+ useEffect(()=>{void load()},[]);
+ const remove=async(id:string)=>{try{const r=await fetch('/api/learning/'+encodeURIComponent(id)+'?userId='+encodeURIComponent(userId),{method:'DELETE',credentials:'same-origin'});if(!r.ok)throw new Error('删除失败，请重试');setItems(v=>v.filter(x=>x.id!==id))}catch(e){setError(e instanceof Error?e.message:'删除失败，请重试')}};
+ return <section className="learning-panel"><button className="back" onClick={onBack}>← 回到聊天</button><div className="learning-panel-title"><div><span className="profile-eyebrow">我的学习</span><h1>把聊过的内容留下来</h1></div><button className="learning-refresh" onClick={()=>void load()} aria-label="刷新学习记录">↻</button></div>{error&&<p className="learning-error" role="alert">{error}</p>}{loading?<p className="empty">正在读取学习记录…</p>:items.length===0?<p className="empty">还没有待复习内容，继续聊天就会出现啦。</p>:<div className="learning-list">{items.map(item=><article className="learning-item" key={item.id}><div className="learning-card-head"><span className="learning-kind">{item.type==='grammar'?'语法纠错':'表达收藏'}</span><span className="learning-focus">{item.focusPoint||'自然表达'}</span></div><div className="learning-original">{item.originalText}</div><div className="learning-suggested">{item.suggestedText}</div><p>{item.explanationZh}</p><footer><small>{item.status==='mastered'?'已掌握':'待复习'} · 复习 {item.reviewCount} 次</small><button onClick={()=>void remove(item.id)}>删除</button></footer></article>)}</div>}</section>;
+}

@@ -3,7 +3,7 @@ import type {Profile,Message} from './types';
 import {analyzeEmotion} from './emotionAnalyzer';
 import {updateRelationship} from './relationshipManager';
 import {buildPrompt} from './promptBuilder';
-import {loadMemory,saveTurn,saveSummary} from './memoryManager';
+import {loadMemory,saveTurn,saveSummary,saveLearningRecord} from './memoryManager';
 import {callJson,callStream} from './llm';
 import {normalizeStreamResult,partialReply,sanitizeHistory,modelHistory,isSingleEnglishWord,isLowQualityReply,isHistoryEcho,isRepeatedAssistantReply,fallbackReply} from './streamParsing';
 
@@ -71,7 +71,7 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
     // deterministic local fallback, while keeping arbitrary/empty corruption
     // as an error so it is never presented as a successful answer.
     if(!normalized&&/^(true|false|null)$/i.test(raw.trim())){
-      normalized={hasError:false,errorLevel:'none',original:body.message,corrected:body.message,explanationZh:'',requireRepeat:false,replyZh:'',replyEn:fallbackReply(body.message)};
+      normalized={hasError:false,errorLevel:'none',original:body.message,corrected:body.message,explanationZh:'',requireRepeat:false,replyZh:'',replyEn:fallbackReply(body.message),learningFeedback:{type:'none',originalText:body.message,suggestedText:body.message,explanationZh:'',focusPoint:''}};
       console.warn(JSON.stringify({event:'stream_schema_fallback',request_id:body.requestId,raw_scalar:raw.trim()}));
     }
     if(!normalized){
@@ -84,6 +84,7 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
       normalized={...normalized,replyEn:fallbackReply(body.message)};
       console.log(JSON.stringify({event:'reply_quality_fallback',request_id:body.requestId,original_chars:body.message.length,reply_chars:result?.replyEn?.length??0,fallback_chars:normalized.replyEn.length}));
     }
+    normalized.learningFeedback={...normalized.learningFeedback,sourceMessageId:body.requestId};
     if(normalized.replyEn.length>visibleReply.length){
       const text=normalized.replyEn.slice(visibleReply.length);
       visibleReply=normalized.replyEn;
@@ -94,6 +95,12 @@ export async function chatStreamService(env:Env,body:{userId:string;requestId:st
       if(text)controller.enqueue(event('delta',{text}));
     }
     await saveTurn(db,body.userId,profile,relationship,body.message,normalized,emotion,body.requestId);
+    if(normalized.learningFeedback?.type==='grammar'){
+      try{
+        const recordId=await saveLearningRecord(db,body.userId,body.requestId,normalized.learningFeedback);
+        if(recordId)normalized.learningFeedback={...normalized.learningFeedback,learningSaved:true,recordId};
+      }catch(error){console.error(JSON.stringify({event:'learning_record_auto_save_failed',request_id:body.requestId,type:error instanceof Error?error.name:'unknown'}));}
+    }
     console.log(JSON.stringify({event:'stream_completed',request_id:body.requestId,ttft_ms:firstMs,complete_ms:Math.round(performance.now()-started),input_tokens:usage?.prompt_tokens??null,output_tokens:usage?.completion_tokens??null,raw_length:raw.length,reply_chars:normalized.replyEn.length,history_messages:history.length,llm_calls:1,saved:true,sse_done:true}));
     controller.enqueue(event('done',{result:normalized}));
     controller.close();

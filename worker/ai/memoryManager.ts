@@ -19,5 +19,15 @@ export async function saveSummary(db:D1Database,id:string,summary:string,through
  await db.batch([db.prepare('UPDATE chat_profiles SET conversation_summary=?,summary_through=? WHERE id=? AND summary_through<?').bind(summary.slice(0,4000),through,id,through),db.prepare('DELETE FROM recent_messages WHERE user_id=? AND seq NOT IN (SELECT seq FROM recent_messages WHERE user_id=? ORDER BY seq DESC LIMIT 40)').bind(id,id)]);
 }
 
+export async function saveLearningRecord(db:D1Database,userId:string,sourceMessageId:string,feedback:any){
+ if(!feedback||feedback.type!=='grammar'||typeof feedback.originalText!=='string'||typeof feedback.suggestedText!=='string'||typeof feedback.explanationZh!=='string')return null;
+ const original=feedback.originalText.trim().slice(0,4000),suggested=feedback.suggestedText.trim().slice(0,4000),explanation=feedback.explanationZh.trim().slice(0,1000);
+ if(!original||!suggested||!explanation||original===suggested)return null;
+ const now=new Date().toISOString();const id=`learn-${crypto.randomUUID()}`;
+ await db.prepare(`INSERT INTO learning_records(id,user_id,source_message_id,original_text,suggested_text,learning_type,focus_point,explanation_zh,status,review_count,created_at,updated_at,next_review_at) VALUES(?,?,?,?,?,'grammar',?,?,'review',0,?,?,NULL) ON CONFLICT(user_id,learning_type,original_text,suggested_text) DO UPDATE SET source_message_id=excluded.source_message_id,focus_point=excluded.focus_point,explanation_zh=excluded.explanation_zh,updated_at=excluded.updated_at`).bind(id,userId,sourceMessageId,original,suggested,String(feedback.focusPoint||'grammar').slice(0,200),explanation,now,now).run();
+ const row=await db.prepare('SELECT id FROM learning_records WHERE user_id=? AND learning_type=? AND original_text=? AND suggested_text=?').bind(userId,'grammar',original,suggested).first<{id:string}>();
+ return row?.id||null;
+}
+
 
 

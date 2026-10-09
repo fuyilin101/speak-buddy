@@ -1,5 +1,18 @@
-export type StreamReply={hasError:boolean;errorLevel:string;original:string;corrected:string;explanationZh:string;requireRepeat:boolean;replyZh:string;replyEn:string;[key:string]:unknown};
-const defaults=(original:string)=>({hasError:false,errorLevel:'none',original,corrected:original,explanationZh:'',requireRepeat:false,replyZh:''});
+export type LearningFeedback={type:'grammar'|'expression'|'none';originalText:string;suggestedText:string;explanationZh:string;focusPoint:string;learningSaved?:boolean;recordId?:string;sourceMessageId?:string};
+export type StreamReply={hasError:boolean;errorLevel:string;original:string;corrected:string;explanationZh:string;requireRepeat:boolean;replyZh:string;replyEn:string;learningFeedback:LearningFeedback;[key:string]:unknown};
+const noneFeedback=(original:string):LearningFeedback=>({type:'none',originalText:original,suggestedText:original,explanationZh:'',focusPoint:''});
+const defaults=(original:string)=>({hasError:false,errorLevel:'none',original,corrected:original,explanationZh:'',requireRepeat:false,replyZh:'',learningFeedback:noneFeedback(original)});
+function normalizeFeedback(value:any,original:string,legacy:any):LearningFeedback{
+ const source=value&&typeof value==='object'?value:{};
+ const type=source.type==='grammar'||source.type==='expression'||source.type==='none'?source.type:'none';
+ const originalText=typeof source.originalText==='string'&&source.originalText.trim()?source.originalText.trim().slice(0,4000):original.slice(0,4000);
+ const suggestedText=typeof source.suggestedText==='string'&&source.suggestedText.trim()?source.suggestedText.trim().slice(0,4000):'';
+ const explanationZh=typeof source.explanationZh==='string'?source.explanationZh.trim().slice(0,1000):'';
+ const focusPoint=typeof source.focusPoint==='string'?source.focusPoint.trim().slice(0,200):'';
+ if(type!=='none'&&suggestedText&&explanationZh)return {type,originalText,suggestedText,explanationZh,focusPoint};
+ if(legacy?.hasError===true&&typeof legacy.corrected==='string'&&legacy.corrected.trim()&&legacy.corrected.trim()!==original.trim())return {type:'grammar',originalText:typeof legacy.original==='string'?legacy.original.slice(0,4000):original.slice(0,4000),suggestedText:legacy.corrected.trim().slice(0,4000),explanationZh:typeof legacy.explanationZh==='string'?legacy.explanationZh.trim().slice(0,1000):'',focusPoint:typeof legacy.errorLevel==='string'?legacy.errorLevel.slice(0,200):'grammar'};
+ return noneFeedback(original);
+}
 function decodeQuoted(value:string){try{return JSON.parse(`"${value}"`)}catch{return value.replace(/\\n/g,'\n').replace(/\\"/g,'"')}}
 export function partialReply(raw:string){
  const match=raw.match(/"replyEn"\s*:\s*"((?:\\.|[^"\\])*)/);if(match)return decodeQuoted(match[1]);
@@ -9,7 +22,7 @@ export function normalizeStreamResult(raw:string,original:string):StreamReply|nu
  const cleaned=raw.trim();if(!cleaned)return null;let value:any;
  try{value=JSON.parse(cleaned)}catch{const match=cleaned.match(/\{[\s\S]*\}/);if(match){try{value=JSON.parse(match[0])}catch{return null}}}
  if(typeof value==='string'&&value.trim())return {...defaults(original),replyEn:value.trim()};
- if(value&&typeof value.replyEn==='string'&&value.replyEn.trim())return {...defaults(original),...value};
+ if(value&&typeof value.replyEn==='string'&&value.replyEn.trim())return {...defaults(original),...value,learningFeedback:normalizeFeedback(value.learningFeedback,original,value)};
  return null;
 }
 
