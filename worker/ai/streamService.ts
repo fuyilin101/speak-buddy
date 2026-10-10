@@ -1,5 +1,5 @@
 import type {Env} from '../index';
-import type {Profile,Message} from './types';
+import type {Profile,Message,ScenarioContext} from './types';
 import {analyzeEmotion} from './emotionAnalyzer';
 import {updateRelationship} from './relationshipManager';
 import {buildPrompt} from './promptBuilder';
@@ -19,13 +19,13 @@ async function refreshSummary(env:Env,userId:string,previous:string,messages:Mes
 const encoder=new TextEncoder();
 const event=(type:string,data:unknown)=>encoder.encode(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
 function parseDelta(value:any){const content=value?.choices?.[0]?.delta?.content;return typeof content==='string'?content:'';}
-export async function chatStreamService(env:Env,body:{userId:string;requestId:string;message:string;setup:Profile;history?:Message[]},requestSignal?:AbortSignal,defer?:Defer){
+export async function chatStreamService(env:Env,body:{userId:string;requestId:string;message:string;setup:Profile;history?:Message[];scenario?:ScenarioContext},requestSignal?:AbortSignal,defer?:Defer){
  if(!env.DB)throw new Error('数据库未配置');const db=env.DB;
  const cached=await db.prepare('SELECT response_json FROM chat_requests WHERE user_id=? AND request_id=?').bind(body.userId,body.requestId).first<{response_json:string}>();
  if(cached){const result=JSON.parse(cached.response_json);return new ReadableStream({start(controller){controller.enqueue(event('delta',{text:result.replyEn}));controller.enqueue(event('done',{result}));controller.close();}});}
  const started=performance.now();console.log(JSON.stringify({event:'stream_request_started',request_id:body.requestId}));const memory=await loadMemory(env.DB,body.userId);const profile=memory.state?.profile_completed?JSON.parse(memory.state.profile_json):body.setup;const emotion=analyzeEmotion(body.message);const relationship=updateRelationship(memory.state,new Date().toISOString());
  const summary=memory.summary;const total=memory.state?.message_count||0;const shouldRefreshSummary=total-(memory.state?.summary_through||0)>=40;
- const history=sanitizeHistory(memory.messages.length?memory.messages:(body.history||[]).slice(-40));const systemPrompt=buildPrompt(profile,emotion,relationship,summary);const vocabularyInstruction=isSingleEnglishWord(body.message)?{role:'system',content:'The user sent exactly one English word for vocabulary practice. Define that word in simple English, give one short example sentence, and ask one related question. Your replyEn must contain the meaning and example; never merely repeat the word.'}:null;const upstream=await callStream(env,[{role:'system',content:systemPrompt},...modelHistory(history),...(vocabularyInstruction?[vocabularyInstruction]:[]),{role:'user',content:body.message}],900,requestSignal,body.requestId);
+ const history=sanitizeHistory(memory.messages.length?memory.messages:(body.history||[]).slice(-40));const systemPrompt=buildPrompt(profile,emotion,relationship,summary,body.scenario);const asksWordQuestion=/\b(what does|define|meaning|translate|how do you use)\b|是什么意思|含义|怎么用|翻译/i.test(body.message);const vocabularyInstruction=!body.scenario&&isSingleEnglishWord(body.message)&&asksWordQuestion?{role:'system',content:'The user explicitly asked about this word. Define it in simple English, give one short example sentence, and ask one related question.'}:null;const upstream=await callStream(env,[{role:'system',content:systemPrompt},...modelHistory(history),...(vocabularyInstruction?[vocabularyInstruction]:[]),{role:'user',content:body.message}],900,requestSignal,body.requestId);
  const reader=upstream.getReader();const decoder=new TextDecoder();let buffer='';let raw='';let reply='';let visibleReply='';let firstMs:number|null=null;let usage:any=null;let closed=false;let persistenceFailure=false;
  return new ReadableStream({async start(controller){
   try {
