@@ -5,6 +5,7 @@ let activeObjectUrl: string | null = null;
 let generation = 0;
 let activeText = '';
 let activePromise: Promise<void> | null = null;
+const ttsBlobCache = new Map<string, Blob>();
 
 export function stopTts(audioRef: AudioRef) {
   generation += 1;
@@ -30,17 +31,22 @@ export async function speakTts(text: string, audioRef: AudioRef, onStatus: (mess
   activeRequest = controller;
   const run = async () => {
    try {
-    const response = await fetch('/api/tts', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ text: value }),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      if (response.status === 429) throw new Error('朗读请求过于频繁，请稍后再试');
-      throw new Error(response.status === 413 ? '朗读文字太长，请分段播放' : '语音服务暂时不可用');
+    let blob = ttsBlobCache.get(value);
+    if (!blob) {
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: value }),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        if (response.status === 429) throw new Error('朗读请求过于频繁，请稍后再试');
+        throw new Error(response.status === 413 ? '朗读文字太长，请分段播放' : '语音服务暂时不可用');
+      }
+      blob = await response.blob();
+      ttsBlobCache.set(value, blob);
+      if (ttsBlobCache.size > 16) ttsBlobCache.delete(ttsBlobCache.keys().next().value!);
     }
-    const blob = await response.blob();
     if (!blob.size) throw new Error('没有生成有效音频');
     if (requestGeneration !== generation) return;
     const url = URL.createObjectURL(blob);
