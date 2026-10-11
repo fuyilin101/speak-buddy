@@ -1,5 +1,7 @@
 # 动漫角色英语口语 AI · V0.1
 
+本仓库的项目目录说明见 [`projects/`](./projects/)，当前 Speak Buddy 项目说明见 [`projects/speak-buddy/`](./projects/speak-buddy/)。
+
 Cloudflare Workers + React/Vite 的手机网页/PWA MVP。首版只实现文字聊天、角色设置、即时纠错和错误记录；模型、语音、视觉与角色素材通过边界接口预留。
 
 ## 本地启动
