@@ -1,0 +1,58 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "genesis-ai",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-11",
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true
+    }
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "genesis-ai",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  "env": {
+    "test": {
+      "name": "genesis-ai-test",
+      "workers_dev": true,
+      "assets": {
+        "directory": "./.genesis-cloud-assets",
+        "binding": "ASSETS",
+        "not_found_handling": "none",
+        "html_handling": "none",
+        "run_worker_first": true
+      },
+      "vars": {
+        "GENESIS_ENVIRONMENT": "test",
+        "GENESIS_ENABLE_CLOUD_MANAGEMENT": "1",
+        "GENESIS_ENABLE_OWNER_SETUP": "1"
+      },
+      "secrets": {
+        "required": [
+          "GENESIS_AGENT_TOKEN",
+          "GENESIS_VIEW_PASSWORD"
+        ]
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "genesis-ai-test",
+          "database_id": "REPLACE_WITH_TEST_D1_DATABASE_ID",
+          "migrations_dir": "./migrations"
+        }
+      ]
+    }
+  }
+}

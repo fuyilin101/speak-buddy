@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 · Genesis AI（新生）</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0c0d0f"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Genesis"><meta name="apple-mobile-web-app-status-bar-style" content="black"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <!-- The auth pages need tokens (themes + fonts), base (body, .glass, .brand,
+       .orb, button) and components (input). They deliberately reuse the app's
+       own sheets rather than a private copy — same files, same cache entries,
+       so this page can never drift out of the theme again. -->
+  <link rel="stylesheet" href="css/01-tokens.css?v=6" />
+  <link rel="stylesheet" href="css/02-base.css?v=5" />
+  <link rel="stylesheet" href="css/03-components.css?v=10" />
+  <style>
+    body { display: grid; place-items: center; }
+    .login-box { width: 100%; max-width: 400px; padding: 40px; text-align: center; }
+    .login-box h1 { font-size: 32px; margin-bottom: 24px; background: none; -webkit-text-fill-color: var(--text); }
+    .login-box input { margin-bottom: 16px; text-align: center; font-size: 18px; }
+    .login-box button { width: 100%; padding: 14px; font-size: 16px; }
+    .error { color: var(--red); font-size: 14px; margin-top: 16px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="login-box glass">
+    <div class="brand" style="justify-content: center; margin-bottom: 16px;"><span class="brand-mark lg" aria-hidden="true"><svg viewBox="0 0 192 192"><path d="M22 80 L62 64 L62 96 Z"/><rect x="54" y="56" width="118" height="28" rx="8"/><path d="M86 84 H142 L124 120 H100 Z"/><path d="M60 120 H160 L178 156 H42 Z"/></svg></span><span>Genesis AI（新生）</span></div>
+    <h1>欢迎回来</h1>
+    <form id="loginForm">
+      <input type="password" id="password" placeholder="请输入你的登录密码" aria-label="登录密码" autocomplete="current-password" required autofocus>
+      <button type="submit" class="primary">登录</button>
+      <div class="error" id="errorMsg">密码不正确</div>
+    </form>
+  </div>
+
+  <script src="login.js"></script>
+  <script defer src="/genesis-pwa.js?v=1"></script>
+</body>
+</html>

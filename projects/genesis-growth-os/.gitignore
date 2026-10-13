@@ -1,0 +1,28 @@
+node_modules/
+data/
+*.sqlite
+*.sqlite-*
+*.db
+*.log
+.DS_Store
+.env
+
+# Hermes agent runtime files (keep secrets/state local)
+agent/config.json
+agent/hermes_state.json
+.env.sync
+
+# Python bytecode from the optional agent
+__pycache__/
+*.pyc
+
+# Local UI-review sandbox credentials (throwaway, never deployed)
+.env.review
+
+# Cloudflare local state and secret files (never commit)
+.wrangler/
+.genesis-cloud-assets/
+.dev.vars*
+.env.*
+!.env.example
+!.env.sync.example

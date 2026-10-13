@@ -1,0 +1,551 @@
+/* Self-hosted fonts (latin) — no external requests, fully offline.
+   Paths are root-relative: this file lives under /css/, so a relative
+   `fonts/...` would resolve to /css/fonts/ and silently 404. */
+@font-face{font-family:'Outfit';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/outfit-400.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/outfit-700.woff2') format('woff2');}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:900;font-display:swap;src:url('/fonts/outfit-900.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/inter-400.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/inter-500.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/inter-600.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/inter-700.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/inter-800.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:900;font-display:swap;src:url('/fonts/inter-900.woff2') format('woff2');}
+
+/* ===========================================================================
+ * SCALE — shape, not colour.
+ * ---------------------------------------------------------------------------
+ * Themes below override colour only, so these are defined once and every theme
+ * inherits them. Before this the sheet had seven type sizes between 9px and
+ * 13px (9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13), radii picked ad hoc between
+ * 2px and 26px, and one enormous shadow used at every elevation. A scale is
+ * what makes a surface read as deliberate rather than accumulated.
+ * ======================================================================== */
+:root {
+  /* Type. A ~1.25 ratio from the smallest label to the display size. The floor
+     is 11px: 9px uppercase on a near-black ground is not a size, it is a dare. */
+  --t-2xs: 11px;   /* uppercase micro-labels, with tracking */
+  --t-xs:  12px;   /* pills, badges, captions */
+  --t-sm:  13px;   /* secondary text, hints */
+  --t-md:  15px;   /* body, task titles */
+  --t-lg:  19px;   /* card headings — every card in the app titles itself here */
+  --t-xl:  26px;   /* the one hero figure or name a card is allowed */
+  --t-2xl: 40px;   /* display figures */
+  /* Sizes above --t-2xl are deliberate one-offs and stay in px: the focus
+     timer, the level number, the boss's emoji. They are pictures, not type. */
+
+  /* Radius. Rounder than this and a card stops reading as a panel and starts
+     reading as a pill; the old 26px on every glass surface is what made the
+     whole app feel soft and same-y. */
+  --r-2xs: 4px;    /* inner parts — bar caps, dots, the smallest chips */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;    /* the card default (--radius) */
+  --r-xl: 18px;
+  --r-pill: 99px;
+
+  /* Space — a 4pt grid. */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 40px;
+
+  /* Elevation. Three steps instead of one 90px-blur shadow used everywhere:
+     a resting surface, a raised card, a floating sheet. */
+  --e-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --e-2: 0 8px 24px -12px rgba(0, 0, 0, 0.75);
+  --e-3: 0 24px 64px -24px rgba(0, 0, 0, 0.85);
+
+  /* Edges. A 5%-white top-only inset is the canonical glass cue — it says
+     "pane". Metal has a specular top AND a dark bottom, and it is that second
+     line that reads as thickness. Two tokens, and every raised surface stops
+     being a sheet of glass and becomes a plate. --edge keeps its old name so
+     existing consumers inherit the pair for free. */
+  --edge-top: inset 0  1px 0 rgba(255, 255, 255, 0.07);
+  --edge-bot: inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+  --edge: var(--edge-top), var(--edge-bot);
+
+  /* Chip radius. Metal is cut and ground, so it has a tight edge, not a
+     capsule. 99px was on 47 things — buttons, badges, tabs, the topbar — which
+     is most of why the app read as soft. Bars keep --r-pill: a progress track
+     genuinely is a capsule, and squaring it would be costume, not material. */
+  --r-chip: 7px;
+
+  /* HEAT — the one saturated colour the app is allowed.
+     Black-body order, so it is monotonic in luminance: it reads as "more"
+     without a legend and survives greyscale. Heat is EARNED, never ambient —
+     if more than ~5% of the screen is warm, this is being used wrong.
+     Lives here, in the scale, not in a theme: material is shape, not colour,
+     so all ten themes inherit it and only the accent hue still varies. */
+  --heat-0: #3a3632;   /* ash — cold, done, spent */
+  --heat-1: #7c2d12;   /* dull red — barely working */
+  --heat-2: #c2410c;
+  --heat-3: #f97316;   /* working temperature */
+  --heat-4: #fbbf24;
+  --heat-5: #fff7ed;   /* white hot — the rarest state in the app */
+  --heat-glow: rgba(249, 115, 22, 0.30);
+}
+
+
+/* ===========================================================================
+ * FINISHES
+ * ---------------------------------------------------------------------------
+ * A finish is the heat ramp in another hue, bought with embers. It lives here
+ * beside the ramp it overrides rather than in a theme block, because it is
+ * orthogonal to theme: any of the ten themes can be worn with any finish.
+ *
+ * Every ramp below climbs in luminance in exactly the order the default does —
+ * ash, dull, working, hot, bright, white. That is not a style choice, it is the
+ * contract: the ramp is how this app says "more" without a legend, and
+ * test/embers.js fails the build if a finish ever breaks the climb.
+ * ======================================================================== */
+
+:root[data-finish="quench"] {
+  --heat-0: #2f3338;
+  --heat-1: #0f3a56;
+  --heat-2: #0e6d94;
+  --heat-3: #22a5c4;
+  --heat-4: #7fd4e6;
+  --heat-5: #f2fbff;
+  --heat-glow: rgba(34, 165, 196, 0.30);
+}
+:root[data-finish="verdigris"] {
+  --heat-0: #31352f;
+  --heat-1: #14431f;
+  --heat-2: #137a3c;
+  --heat-3: #2aa85c;
+  --heat-4: #7fd694;
+  --heat-5: #f2fff6;
+  --heat-glow: rgba(42, 168, 92, 0.30);
+}
+:root[data-finish="bloodiron"] {
+  --heat-0: #38302e;
+  --heat-1: #781824;
+  --heat-2: #c02236;
+  --heat-3: #ef5566;
+  --heat-4: #fba9b1;
+  --heat-5: #fff2f3;
+  --heat-glow: rgba(239, 85, 102, 0.30);
+}
+:root[data-finish="moonsilver"] {
+  --heat-0: #33313a;
+  --heat-1: #413878;
+  --heat-2: #6a5ad4;
+  --heat-3: #9d8df3;
+  --heat-4: #d0c8fb;
+  --heat-5: #f7f5ff;
+  --heat-glow: rgba(157, 141, 243, 0.30);
+}
+
+/* ===========================================================================
+ * FORGE — the default.
+ * ---------------------------------------------------------------------------
+ * A smith's shop is dark, cold iron, and one small intensely hot spot. That is
+ * simultaneously the right picture of the craft this app is about and the right
+ * information design for something opened every day: heat is scarce, so heat
+ * means something. The ground is graphite with a slight warm bias rather than a
+ * neutral grey — a pure grey reads as unconsidered, and a brown one (see Warm
+ * Ember below) reads as a filter over the whole room instead of a fire in it.
+ *
+ * The material — the heat ramp, the metal edges, the chip radius — is NOT here.
+ * It lives in the scale block above, so every theme in this file gets metal
+ * plates and orange sparks, and only the accent hue changes between them.
+ * ======================================================================== */
+:root, [data-theme="forge"] {
+  --bg: #0c0c0f;
+  --bg-2: #131318;
+  --glass: rgba(22, 22, 27, 0.90);
+  --glass-2: rgba(30, 30, 36, 0.80);
+  --glass-3: rgba(255, 255, 255, 0.04);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --text: #f4f2f0;
+  --text-dim: #cbc7c2;
+  --muted: #9a948d;
+  --muted-2: #6b6660;
+  --blue: #f97316;
+  --blue-2: #c2410c;
+  --green: #f59e0b;
+  --amber: #fbbf24;
+  --red: #ef4444;
+  --violet: #fb923c;
+  --accent-primary: #f97316;
+  --accent-secondary: #fbbf24;
+  --accent-success: #f59e0b;
+  /* The ambient wash is nearly nothing. If the room glows, the metal cannot. */
+  --body-gradient-1: rgba(249, 115, 22, 0.07);
+  --body-gradient-2: rgba(194, 65, 12, 0.05);
+  --body-gradient-3: rgba(251, 191, 36, 0.04);
+  --body-bg-top: #0c0c0f;
+  --body-bg-mid: #0f0f13;
+  --body-bg-bot: #0a0a0d;
+  --radius: var(--r-lg);
+  --shadow: var(--e-2);
+  --glow-green: 0 0 20px rgba(245, 158, 11, 0.30);
+  --glow-blue: 0 0 20px rgba(249, 115, 22, 0.30);
+  --gradient-brand: linear-gradient(135deg, var(--heat-2), var(--heat-4));
+  --gradient-success-bg: rgba(249, 115, 22, 0.14);
+  --gradient-success-text: #fdba74;
+  --orb-color: #f97316;
+  --orb-glow: 0 0 18px rgba(249, 115, 22, 0.45);
+  --orb-ring: rgba(249, 115, 22, 0.45);
+  --score-glow: rgba(249, 115, 22, 0.32);
+  --score-ring-inset: rgba(249, 115, 22, 0.12);
+  --hero-glow: rgba(249, 115, 22, 0.10);
+  --eyebrow-bg: rgba(249, 115, 22, 0.10);
+  --eyebrow-border: rgba(249, 115, 22, 0.24);
+  --eyebrow-text: #fed7aa;
+  --h1-gradient: linear-gradient(to right, #fff, #fcd34d);
+  --pill-green-text: #fdba74;
+  --pill-green-bg: rgba(249, 115, 22, 0.10);
+  --pill-green-border: rgba(249, 115, 22, 0.20);
+  --pill-amber-text: #fcd34d;
+  --pill-amber-bg: rgba(251, 191, 36, 0.10);
+  --pill-amber-border: rgba(251, 191, 36, 0.20);
+  --pill-blue-text: #fed7aa;
+  --pill-blue-bg: rgba(194, 65, 12, 0.12);
+  --pill-blue-border: rgba(194, 65, 12, 0.24);
+  --primary-shadow: rgba(249, 115, 22, 0.35);
+  --primary-shadow-hover: rgba(249, 115, 22, 0.60);
+}
+
+/* ===== THEME SYSTEM =====
+ * Everything below is colour only, and now genuinely optional: they are skins
+ * over the Forge material, not ten different apps. */
+[data-theme="true-black"] {
+  --bg: #030305;
+  --bg-2: #09090c;
+  --glass: rgba(16, 16, 22, 0.75);
+  --glass-2: rgba(22, 22, 30, 0.65);
+  --glass-3: rgba(255, 255, 255, 0.05);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --text: #f7fbff;
+  --text-dim: #cbd5e1;
+  --muted: #94a3b8;
+  --muted-2: #64748b;
+  --blue: #38bdf8;
+  --blue-2: #2563eb;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --violet: #8b5cf6;
+  --accent-primary: #38bdf8;
+  --accent-secondary: #8b5cf6;
+  --accent-success: #22c55e;
+  --body-gradient-1: rgba(56, 189, 248, 0.18);
+  --body-gradient-2: rgba(139, 92, 246, 0.15);
+  --body-gradient-3: rgba(34, 197, 94, 0.12);
+  --body-bg-top: #040406;
+  --body-bg-mid: #08080a;
+  --body-bg-bot: #040406;
+  --radius: var(--r-lg);
+  --shadow: var(--e-2);
+  --glow-green: 0 0 25px rgba(34, 197, 94, 0.4);
+  --glow-blue: 0 0 25px rgba(56, 189, 248, 0.4);
+  --gradient-brand: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  --gradient-success-bg: rgba(34, 197, 94, 0.15);
+  --gradient-success-text: #86efac;
+  --orb-color: var(--accent-success);
+  --orb-glow: 0 0 25px rgba(34, 197, 94, 0.4);
+  --orb-ring: rgba(34, 197, 94, 0.5);
+  --score-glow: rgba(34, 197, 94, 0.4);
+  --score-ring-inset: rgba(34, 197, 94, 0.15);
+  --hero-glow: rgba(56,189,248,0.15);
+  --eyebrow-bg: rgba(56, 189, 248, 0.1);
+  --eyebrow-border: rgba(56, 189, 248, 0.25);
+  --eyebrow-text: #e0f2fe;
+  --h1-gradient: linear-gradient(to right, #fff, #a5b4fc);
+  --pill-green-text: #86efac;
+  --pill-green-bg: rgba(34,197,94,0.1);
+  --pill-green-border: rgba(34,197,94,0.2);
+  --pill-amber-text: #fcd34d;
+  --pill-amber-bg: rgba(245,158,11,0.1);
+  --pill-amber-border: rgba(245,158,11,0.2);
+  --pill-blue-text: #7dd3fc;
+  --pill-blue-bg: rgba(56,189,248,0.1);
+  --pill-blue-border: rgba(56,189,248,0.2);
+  --primary-shadow: rgba(37, 99, 235, 0.4);
+  --primary-shadow-hover: rgba(37, 99, 235, 0.7);
+}
+
+/* Crimson Night */
+[data-theme="crimson-night"] {
+  --bg: #120208;
+  --bg-2: #1c0410;
+  --glass: rgba(28, 4, 16, 0.75);
+  --glass-2: rgba(40, 8, 24, 0.65);
+  --glass-3: rgba(236, 72, 153, 0.04);
+  --line: rgba(236, 72, 153, 0.12);
+  --line-strong: rgba(236, 72, 153, 0.22);
+  --blue: #ef4444;
+  --blue-2: #dc2626;
+  --green: #fb7185;
+  --violet: #f43f5e;
+  --accent-primary: #ef4444;
+  --accent-secondary: #f43f5e;
+  --accent-success: #fb7185;
+  --body-gradient-1: rgba(239, 68, 68, 0.16);
+  --body-gradient-2: rgba(244, 63, 94, 0.12);
+  --body-gradient-3: rgba(220, 38, 38, 0.10);
+  --body-bg-top: #14060a;
+  --body-bg-mid: #1a070c;
+  --body-bg-bot: #14060a;
+  --gradient-brand: linear-gradient(135deg, #ef4444, #f43f5e);
+  --gradient-success-bg: rgba(251, 113, 133, 0.15);
+  --gradient-success-text: #fecaca;
+  --orb-color: #ef4444;
+  --orb-glow: 0 0 25px rgba(239, 68, 68, 0.5);
+  --orb-ring: rgba(239, 68, 68, 0.5);
+  --score-glow: rgba(239, 68, 68, 0.4);
+  --score-ring-inset: rgba(239, 68, 68, 0.15);
+  --hero-glow: rgba(239, 68, 68, 0.15);
+  --eyebrow-bg: rgba(239, 68, 68, 0.1);
+  --eyebrow-border: rgba(239, 68, 68, 0.25);
+  --eyebrow-text: #fee2e2;
+  --h1-gradient: linear-gradient(to right, #fff, #fca5a5);
+  --pill-green-text: #fecaca;
+  --pill-green-bg: rgba(251,113,133,0.1);
+  --pill-green-border: rgba(251,113,133,0.2);
+  --pill-blue-text: #fca5a5;
+  --pill-blue-bg: rgba(239,68,68,0.1);
+  --pill-blue-border: rgba(239,68,68,0.2);
+  --primary-shadow: rgba(239, 68, 68, 0.4);
+  --primary-shadow-hover: rgba(239, 68, 68, 0.7);
+}
+
+/* Deep Forest */
+[data-theme="deep-forest"] {
+  --bg: #021a07;
+  --bg-2: #0a2614;
+  --glass: rgba(10, 38, 20, 0.75);
+  --glass-2: rgba(15, 48, 28, 0.65);
+  --glass-3: rgba(34, 197, 94, 0.04);
+  --line: rgba(34, 197, 94, 0.12);
+  --line-strong: rgba(34, 197, 94, 0.22);
+  --blue: #14b8a6;
+  --blue-2: #0d9488;
+  --green: #84cc16;
+  --violet: #22c55e;
+  --accent-primary: #22c55e;
+  --accent-secondary: #14b8a6;
+  --accent-success: #84cc16;
+  --body-gradient-1: rgba(34, 197, 94, 0.15);
+  --body-gradient-2: rgba(20, 184, 166, 0.12);
+  --body-gradient-3: rgba(132, 204, 22, 0.10);
+  --body-bg-top: #021a07;
+  --body-bg-mid: #06200d;
+  --body-bg-bot: #021a07;
+  --gradient-brand: linear-gradient(135deg, #22c55e, #14b8a6);
+  --gradient-success-bg: rgba(132, 204, 22, 0.15);
+  --gradient-success-text: #bef264;
+  --orb-color: #22c55e;
+  --orb-glow: 0 0 25px rgba(34, 197, 94, 0.5);
+  --orb-ring: rgba(34, 197, 94, 0.5);
+  --score-glow: rgba(34, 197, 94, 0.5);
+  --score-ring-inset: rgba(34, 197, 94, 0.15);
+  --hero-glow: rgba(34, 197, 94, 0.15);
+  --eyebrow-bg: rgba(34, 197, 94, 0.1);
+  --eyebrow-border: rgba(34, 197, 94, 0.25);
+  --eyebrow-text: #dcfce7;
+  --h1-gradient: linear-gradient(to right, #fff, #86efac);
+  --pill-green-text: #bef264;
+  --pill-green-bg: rgba(132,204,22,0.1);
+  --pill-green-border: rgba(132,204,22,0.2);
+  --pill-blue-text: #5eead4;
+  --pill-blue-bg: rgba(20,184,166,0.1);
+  --pill-blue-border: rgba(20,184,166,0.2);
+  --primary-shadow: rgba(34, 197, 94, 0.4);
+  --primary-shadow-hover: rgba(34, 197, 94, 0.7);
+}
+
+/* Warm Ember */
+[data-theme="warm-ember"] {
+  --bg: #1a0a02;
+  --bg-2: #261408;
+  --glass: rgba(38, 20, 8, 0.75);
+  --glass-2: rgba(50, 28, 12, 0.65);
+  --glass-3: rgba(245, 158, 11, 0.04);
+  --line: rgba(245, 158, 11, 0.12);
+  --line-strong: rgba(245, 158, 11, 0.22);
+  --blue: #f59e0b;
+  --blue-2: #d97706;
+  --green: #f97316;
+  --violet: #ef4444;
+  --accent-primary: #f59e0b;
+  --accent-secondary: #ef4444;
+  --accent-success: #f97316;
+  --body-gradient-1: rgba(245, 158, 11, 0.15);
+  --body-gradient-2: rgba(239, 68, 68, 0.10);
+  --body-gradient-3: rgba(249, 115, 22, 0.10);
+  --body-bg-top: #1a0a02;
+  --body-bg-mid: #200e04;
+  --body-bg-bot: #1a0a02;
+  --gradient-brand: linear-gradient(135deg, #f59e0b, #ef4444);
+  --gradient-success-bg: rgba(249, 115, 22, 0.15);
+  --gradient-success-text: #fdba74;
+  --orb-color: #f59e0b;
+  --orb-glow: 0 0 25px rgba(245, 158, 11, 0.5);
+  --orb-ring: rgba(245, 158, 11, 0.5);
+  --score-glow: rgba(245, 158, 11, 0.4);
+  --score-ring-inset: rgba(245, 158, 11, 0.15);
+  --hero-glow: rgba(245, 158, 11, 0.15);
+  --eyebrow-bg: rgba(245, 158, 11, 0.1);
+  --eyebrow-border: rgba(245, 158, 11, 0.25);
+  --eyebrow-text: #fef3c7;
+  --h1-gradient: linear-gradient(to right, #fff, #fcd34d);
+  --pill-green-text: #fdba74;
+  --pill-green-bg: rgba(249,115,22,0.1);
+  --pill-green-border: rgba(249,115,22,0.2);
+  --pill-amber-text: #fcd34d;
+  --pill-amber-bg: rgba(245,158,11,0.1);
+  --pill-amber-border: rgba(245,158,11,0.2);
+  --pill-blue-text: #fde68a;
+  --pill-blue-bg: rgba(245,158,11,0.1);
+  --pill-blue-border: rgba(245,158,11,0.2);
+  --primary-shadow: rgba(245, 158, 11, 0.4);
+  --primary-shadow-hover: rgba(245, 158, 11, 0.7);
+}
+
+/* Royal Purple */
+[data-theme="royal-purple"] {
+  --bg: #0c0520;
+  --bg-2: #150a30;
+  --glass: rgba(21, 10, 48, 0.75);
+  --glass-2: rgba(30, 16, 60, 0.65);
+  --glass-3: rgba(139, 92, 246, 0.04);
+  --line: rgba(139, 92, 246, 0.12);
+  --line-strong: rgba(139, 92, 246, 0.22);
+  --blue: #a78bfa;
+  --blue-2: #7c3aed;
+  --green: #c084fc;
+  --violet: #e879f9;
+  --accent-primary: #a78bfa;
+  --accent-secondary: #e879f9;
+  --accent-success: #c084fc;
+  --body-gradient-1: rgba(167, 139, 250, 0.15);
+  --body-gradient-2: rgba(232, 121, 249, 0.10);
+  --body-gradient-3: rgba(192, 132, 252, 0.10);
+  --body-bg-top: #0c0520;
+  --body-bg-mid: #100828;
+  --body-bg-bot: #0c0520;
+  --gradient-brand: linear-gradient(135deg, #a78bfa, #e879f9);
+  --gradient-success-bg: rgba(192, 132, 252, 0.15);
+  --gradient-success-text: #d8b4fe;
+  --orb-color: #a78bfa;
+  --orb-glow: 0 0 25px rgba(167, 139, 250, 0.5);
+  --orb-ring: rgba(167, 139, 250, 0.5);
+  --score-glow: rgba(167, 139, 250, 0.4);
+  --score-ring-inset: rgba(167, 139, 250, 0.15);
+  --hero-glow: rgba(167, 139, 250, 0.12);
+  --eyebrow-bg: rgba(167, 139, 250, 0.1);
+  --eyebrow-border: rgba(167, 139, 250, 0.25);
+  --eyebrow-text: #ede9fe;
+  --h1-gradient: linear-gradient(to right, #fff, #c4b5fd);
+  --pill-green-text: #d8b4fe;
+  --pill-green-bg: rgba(192,132,252,0.1);
+  --pill-green-border: rgba(192,132,252,0.2);
+  --pill-blue-text: #c4b5fd;
+  --pill-blue-bg: rgba(167,139,250,0.1);
+  --pill-blue-border: rgba(167,139,250,0.2);
+  --primary-shadow: rgba(167, 139, 250, 0.4);
+  --primary-shadow-hover: rgba(167, 139, 250, 0.7);
+}
+
+/* Midnight — deep navy + electric sky */
+[data-theme="midnight"] {
+  --bg: #050b1a; --bg-2: #0a1630;
+  --glass: rgba(10, 22, 44, 0.75); --glass-2: rgba(15, 30, 58, 0.65); --glass-3: rgba(59, 130, 246, 0.04);
+  --line: rgba(96, 165, 250, 0.12); --line-strong: rgba(96, 165, 250, 0.22);
+  --blue: #60a5fa; --blue-2: #3b82f6; --green: #22d3ee; --violet: #38bdf8;
+  --accent-primary: #3b82f6; --accent-secondary: #22d3ee; --accent-success: #22d3ee;
+  --body-gradient-1: rgba(59, 130, 246, 0.16); --body-gradient-2: rgba(34, 211, 238, 0.12); --body-gradient-3: rgba(14, 165, 233, 0.10);
+  --body-bg-top: #050b1a; --body-bg-mid: #07101f; --body-bg-bot: #050b1a;
+  --gradient-brand: linear-gradient(135deg, #3b82f6, #22d3ee);
+  --gradient-success-bg: rgba(34, 211, 238, 0.15); --gradient-success-text: #a5f3fc;
+  --orb-color: #3b82f6; --orb-glow: 0 0 25px rgba(59, 130, 246, 0.5); --orb-ring: rgba(59, 130, 246, 0.5);
+  --score-glow: rgba(59, 130, 246, 0.4); --score-ring-inset: rgba(59, 130, 246, 0.15); --hero-glow: rgba(34, 211, 238, 0.14);
+  --eyebrow-bg: rgba(59, 130, 246, 0.1); --eyebrow-border: rgba(59, 130, 246, 0.25); --eyebrow-text: #dbeafe;
+  --h1-gradient: linear-gradient(to right, #fff, #67e8f9);
+  --pill-green-text: #a5f3fc; --pill-green-bg: rgba(34,211,238,0.1); --pill-green-border: rgba(34,211,238,0.2);
+  --pill-blue-text: #93c5fd; --pill-blue-bg: rgba(59,130,246,0.1); --pill-blue-border: rgba(59,130,246,0.2);
+  --primary-shadow: rgba(59, 130, 246, 0.4); --primary-shadow-hover: rgba(59, 130, 246, 0.7);
+}
+
+/* Nord — arctic slate, easy on the eyes */
+[data-theme="nord"] {
+  --bg: #0e1320; --bg-2: #161d2e;
+  --glass: rgba(22, 29, 46, 0.78); --glass-2: rgba(30, 38, 56, 0.66); --glass-3: rgba(136, 192, 208, 0.05);
+  --line: rgba(136, 192, 208, 0.13); --line-strong: rgba(136, 192, 208, 0.24);
+  --blue: #88c0d0; --blue-2: #5e81ac; --green: #a3be8c; --violet: #b48ead;
+  --accent-primary: #88c0d0; --accent-secondary: #b48ead; --accent-success: #a3be8c;
+  --body-gradient-1: rgba(136, 192, 208, 0.14); --body-gradient-2: rgba(180, 142, 173, 0.10); --body-gradient-3: rgba(163, 190, 140, 0.10);
+  --body-bg-top: #0e1320; --body-bg-mid: #11182a; --body-bg-bot: #0e1320;
+  --gradient-brand: linear-gradient(135deg, #88c0d0, #81a1c1);
+  --gradient-success-bg: rgba(163, 190, 140, 0.15); --gradient-success-text: #cce3a8;
+  --orb-color: #88c0d0; --orb-glow: 0 0 25px rgba(136, 192, 208, 0.45); --orb-ring: rgba(136, 192, 208, 0.5);
+  --score-glow: rgba(136, 192, 208, 0.38); --score-ring-inset: rgba(136, 192, 208, 0.15); --hero-glow: rgba(136, 192, 208, 0.13);
+  --eyebrow-bg: rgba(136, 192, 208, 0.1); --eyebrow-border: rgba(136, 192, 208, 0.25); --eyebrow-text: #eceff4;
+  --h1-gradient: linear-gradient(to right, #eceff4, #88c0d0);
+  --pill-green-text: #cce3a8; --pill-green-bg: rgba(163,190,140,0.1); --pill-green-border: rgba(163,190,140,0.2);
+  --pill-blue-text: #a3cfdd; --pill-blue-bg: rgba(136,192,208,0.1); --pill-blue-border: rgba(136,192,208,0.2);
+  --primary-shadow: rgba(94, 129, 172, 0.4); --primary-shadow-hover: rgba(94, 129, 172, 0.7);
+}
+
+/* Synthwave — retro neon: hot pink + cyan */
+[data-theme="synthwave"] {
+  --bg: #0d0418; --bg-2: #160a28;
+  --glass: rgba(22, 10, 40, 0.76); --glass-2: rgba(32, 14, 56, 0.66); --glass-3: rgba(236, 72, 153, 0.05);
+  --line: rgba(236, 72, 153, 0.14); --line-strong: rgba(236, 72, 153, 0.26);
+  --blue: #22d3ee; --blue-2: #06b6d4; --green: #2dd4bf; --violet: #a855f7;
+  --accent-primary: #ec4899; --accent-secondary: #22d3ee; --accent-success: #2dd4bf;
+  --body-gradient-1: rgba(236, 72, 153, 0.16); --body-gradient-2: rgba(34, 211, 238, 0.12); --body-gradient-3: rgba(168, 85, 247, 0.12);
+  --body-bg-top: #0d0418; --body-bg-mid: #120622; --body-bg-bot: #0d0418;
+  --gradient-brand: linear-gradient(135deg, #ec4899, #22d3ee);
+  --gradient-success-bg: rgba(45, 212, 191, 0.15); --gradient-success-text: #99f6e4;
+  --orb-color: #ec4899; --orb-glow: 0 0 28px rgba(236, 72, 153, 0.55); --orb-ring: rgba(236, 72, 153, 0.5);
+  --score-glow: rgba(236, 72, 153, 0.45); --score-ring-inset: rgba(236, 72, 153, 0.15); --hero-glow: rgba(34, 211, 238, 0.14);
+  --eyebrow-bg: rgba(236, 72, 153, 0.1); --eyebrow-border: rgba(236, 72, 153, 0.28); --eyebrow-text: #fbcfe8;
+  --h1-gradient: linear-gradient(to right, #22d3ee, #ec4899);
+  --pill-green-text: #99f6e4; --pill-green-bg: rgba(45,212,191,0.1); --pill-green-border: rgba(45,212,191,0.2);
+  --pill-blue-text: #67e8f9; --pill-blue-bg: rgba(34,211,238,0.1); --pill-blue-border: rgba(34,211,238,0.2);
+  --primary-shadow: rgba(236, 72, 153, 0.45); --primary-shadow-hover: rgba(236, 72, 153, 0.75);
+}
+
+/* Aurora — teal + cyan + indigo, northern lights */
+[data-theme="aurora"] {
+  --bg: #04140f; --bg-2: #08231a;
+  --glass: rgba(8, 35, 26, 0.76); --glass-2: rgba(12, 46, 34, 0.66); --glass-3: rgba(45, 212, 191, 0.05);
+  --line: rgba(45, 212, 191, 0.13); --line-strong: rgba(45, 212, 191, 0.24);
+  --blue: #22d3ee; --blue-2: #06b6d4; --green: #34d399; --violet: #818cf8;
+  --accent-primary: #2dd4bf; --accent-secondary: #818cf8; --accent-success: #34d399;
+  --body-gradient-1: rgba(45, 212, 191, 0.16); --body-gradient-2: rgba(129, 140, 248, 0.12); --body-gradient-3: rgba(52, 211, 153, 0.10);
+  --body-bg-top: #04140f; --body-bg-mid: #061d15; --body-bg-bot: #04140f;
+  --gradient-brand: linear-gradient(135deg, #2dd4bf, #818cf8);
+  --gradient-success-bg: rgba(52, 211, 153, 0.15); --gradient-success-text: #6ee7b7;
+  --orb-color: #2dd4bf; --orb-glow: 0 0 25px rgba(45, 212, 191, 0.5); --orb-ring: rgba(45, 212, 191, 0.5);
+  --score-glow: rgba(45, 212, 191, 0.4); --score-ring-inset: rgba(45, 212, 191, 0.15); --hero-glow: rgba(129, 140, 248, 0.13);
+  --eyebrow-bg: rgba(45, 212, 191, 0.1); --eyebrow-border: rgba(45, 212, 191, 0.25); --eyebrow-text: #ccfbf1;
+  --h1-gradient: linear-gradient(to right, #a7f3d0, #a5b4fc);
+  --pill-green-text: #6ee7b7; --pill-green-bg: rgba(52,211,153,0.1); --pill-green-border: rgba(52,211,153,0.2);
+  --pill-blue-text: #67e8f9; --pill-blue-bg: rgba(34,211,238,0.1); --pill-blue-border: rgba(34,211,238,0.2);
+  --primary-shadow: rgba(45, 212, 191, 0.4); --primary-shadow-hover: rgba(45, 212, 191, 0.7);
+}
+
+/* Carbon — graphite mono / minimal */
+[data-theme="carbon"] {
+  --bg: #0a0a0b; --bg-2: #16171b;
+  --glass: rgba(22, 23, 27, 0.78); --glass-2: rgba(31, 32, 37, 0.66); --glass-3: rgba(255, 255, 255, 0.04);
+  --line: rgba(255, 255, 255, 0.10); --line-strong: rgba(255, 255, 255, 0.2);
+  --blue: #94a3b8; --blue-2: #64748b; --green: #94a3b8; --violet: #cbd5e1;
+  --accent-primary: #8a97a8; --accent-secondary: #5b6675; --accent-success: #94a3b8;
+  --body-gradient-1: rgba(148, 163, 184, 0.10); --body-gradient-2: rgba(100, 116, 139, 0.08); --body-gradient-3: rgba(203, 213, 225, 0.06);
+  --body-bg-top: #0a0a0b; --body-bg-mid: #0d0e10; --body-bg-bot: #0a0a0b;
+  --gradient-brand: linear-gradient(135deg, #8a97a8, #5b6675);
+  --gradient-success-bg: rgba(148, 163, 184, 0.15); --gradient-success-text: #cbd5e1;
+  --orb-color: #94a3b8; --orb-glow: 0 0 22px rgba(148, 163, 184, 0.4); --orb-ring: rgba(148, 163, 184, 0.5);
+  --score-glow: rgba(148, 163, 184, 0.35); --score-ring-inset: rgba(148, 163, 184, 0.12); --hero-glow: rgba(148, 163, 184, 0.1);
+  --eyebrow-bg: rgba(148, 163, 184, 0.1); --eyebrow-border: rgba(148, 163, 184, 0.25); --eyebrow-text: #e2e8f0;
+  --h1-gradient: linear-gradient(to right, #fff, #cbd5e1);
+  --pill-green-text: #cbd5e1; --pill-green-bg: rgba(148,163,184,0.1); --pill-green-border: rgba(148,163,184,0.2);
+  --pill-blue-text: #cbd5e1; --pill-blue-bg: rgba(148,163,184,0.1); --pill-blue-border: rgba(148,163,184,0.2);
+  --primary-shadow: rgba(148, 163, 184, 0.35); --primary-shadow-hover: rgba(148, 163, 184, 0.6);
+}

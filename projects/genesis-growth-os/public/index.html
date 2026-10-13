@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Genesis AI（新生）｜我的成长系统</title>
+  <meta name="description" content="记录真实行动，沉淀成长证据。Genesis 个人成长系统。">
+  <link rel="icon" href="/favicon.png">
+  <link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0c0d0f"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Genesis"><meta name="apple-mobile-web-app-status-bar-style" content="black"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/css/01-tokens.css?v=9"><link rel="stylesheet" href="/css/02-base.css?v=7">
+  <link rel="stylesheet" href="/css/03-components.css?v=12"><link rel="stylesheet" href="/css/07-genesis.css?v=3">
+  <link rel="stylesheet" href="/css/08-growth-home.css?v=1"><link rel="stylesheet" href="/css/09-genesis-actions.css?v=1"><link rel="stylesheet" href="/css/10-genesis-fusion.css?v=6">
+  <link rel="stylesheet" href="/css/11-genesis-workshop.css?v=5">
+  <link rel="stylesheet" href="/css/12-genesis-skills.css?v=2">
+  <link rel="stylesheet" href="/css/13-genesis-dashboard.css?v=1">
+  <link rel="stylesheet" href="/css/14-genesis-growth-tree.css?v=1">
+</head>
+<body class="growth-root">
+  <header class="growth-topbar"><a class="growth-brand" href="#home"><svg viewBox="0 0 192 192" aria-hidden="true"><path d="M22 80 L62 64 L62 96 Z"/><rect x="54" y="56" width="118" height="28" rx="8"/><path d="M86 84 H142 L124 120 H100 Z"/><path d="M60 120 H160 L178 156 H42 Z"/></svg><span>Genesis AI <small>我的成长系统</small></span></a><span class="growth-readonly">● 记录真实行动</span><button id="refreshGenesis" type="button">刷新状态</button><button id="logoutGenesis" type="button">退出登录</button></header>
+  <div class="growth-frame">
+    <nav class="growth-nav" aria-label="成长系统导航">
+      <span class="growth-nav-caption">我的成长空间</span>
+      <a href="#home" data-growth-nav="home">⌂ <span>首页</span></a>
+      <a href="#character" data-growth-nav="character">◉ <span>我的角色</span></a>
+      <a href="#quests" data-growth-nav="quests">◎ <span>每日使命</span></a>
+      <a href="#skills" data-growth-nav="skills">⌘ <span>技能树</span></a>
+      <a href="#vault" data-growth-nav="vault">◇ <span>成长资产库</span></a>
+      <a href="#settings" data-growth-nav="settings">⚙ <span>设置</span></a>
+      <div class="growth-nav-note">让每一次行动<br>留下可以复用的经验。</div>
+    </nav>
+    <main class="growth-main">
+      <div class="growth-page-heading"><div><p class="growth-eyebrow">GENESIS · 个人成长操作系统</p><h1 id="growthPageTitle">成长驾驶舱</h1><p id="growthPageSubtitle">看见方向，从今天的一步行动开始。</p></div><span id="growthReadState" role="status" aria-live="polite">等待读取真实数据</span></div>
+      <section id="growthHome" aria-label="个人成长首页">
+        <article class="glass growth-role" id="growthCharacter">
+          <div class="dashboard-role-grid"><div class="growth-role-top"><div id="growthCharacterFigure" class="growth-character-figure"></div><div class="growth-identity"><p class="growth-eyebrow">我的角色</p><button type="button" data-edit-profile data-local-editor hidden>编辑角色</button><h2 id="growthName">尚未设置昵称</h2><p id="growthStage">尚未确认当前阶段</p><p id="dashboardRoleRoute" class="dashboard-home-only">等待读取成长路线</p><span id="growthIdentitySource" class="growth-source">来源：尚无已确认的角色资料</span><a href="#character" class="dashboard-home-only dashboard-link">查看我的角色 →</a><p class="growth-status-note">行动状态 · <strong id="growthActionState">等待读取行动计划</strong></p></div><div class="growth-role-note">Build the next version<br>of yourself.</div></div><section class="dashboard-direction dashboard-home-only" aria-label="当前方向"><p class="growth-eyebrow">我要去哪 · 当前目标</p><div id="growthGoal"><p class="dashboard-empty">等待读取当前目标。</p></div></section></div>
+          <p id="dashboardRoleFeedback" class="dashboard-feedback dashboard-home-only" role="status" aria-live="polite"></p>
+          <div class="growth-role-stats"><div><span>今日完成</span><strong id="growthRoleDone">尚无计划</strong></div><div><span>进行中</span><strong id="growthRoleActive">尚无记录</strong></div><div><span>记录来源</span><strong id="growthTrainingStatus">尚未读取</strong></div></div>
+        </article>
+        <section id="dashboardOverview" class="dashboard-home-only" aria-label="每日成长驾驶舱">
+          <div class="dashboard-summary-grid">
+            <article class="glass growth-card dashboard-summary-card" aria-labelledby="dashboardQuestTitle"><div class="growth-card-head"><div><p class="growth-eyebrow">今天做什么</p><h2 id="dashboardQuestTitle">今日使命</h2></div><a href="#quests" class="dashboard-link">每日使命 →</a></div><div class="dashboard-quest-count"><strong id="dashboardQuestDone">—</strong><div><span>今日完成</span><p id="dashboardQuestState">等待读取今日使命</p></div></div><ul id="dashboardQuestList" class="dashboard-list"><li class="dashboard-empty">正在读取使命摘要。</li></ul><p id="dashboardQuestFeedback" class="dashboard-feedback" role="status" aria-live="polite"></p></article>
+            <article class="glass growth-card dashboard-summary-card" aria-labelledby="dashboardSkillTitle"><div class="growth-card-head"><div><p class="growth-eyebrow">持续塑造的方向</p><h2 id="dashboardSkillTitle">成长路线</h2></div><a href="#skills" class="dashboard-link">查看成长之树 →</a></div><p class="dashboard-summary-note">你为自己设定的技能分支与学习阶段。</p><ul id="dashboardSkillList" class="dashboard-list"><li class="dashboard-empty">正在读取成长路线。</li></ul><p id="dashboardSkillFeedback" class="dashboard-feedback" role="status" aria-live="polite"></p></article>
+          </div>
+          <article class="glass growth-card dashboard-results" aria-labelledby="dashboardOutcomeTitle"><div class="growth-card-head"><div><p class="growth-eyebrow">最近留下了什么</p><h2 id="dashboardOutcomeTitle">最近成长</h2></div><a href="#vault" class="dashboard-link">成长资产库 →</a></div><div class="dashboard-outcome-grid"><section aria-labelledby="dashboardProjectsTitle"><h3 id="dashboardProjectsTitle">最近更新项目</h3><ul id="dashboardProjectList" class="dashboard-list"><li class="dashboard-empty">正在读取项目。</li></ul></section><section aria-labelledby="dashboardAssetsTitle"><h3 id="dashboardAssetsTitle">最近沉淀资产</h3><ul id="dashboardAssetList" class="dashboard-list"><li class="dashboard-empty">正在读取资产。</li></ul></section></div><p id="dashboardOutcomeFeedback" class="dashboard-feedback" role="status" aria-live="polite"></p></article>
+        </section>
+        <div class="growth-grid">
+          <article class="glass growth-card" id="growthQuests">
+            <div class="growth-card-head"><h2>每日使命 <small class="quest-english">Genesis Quest</small></h2><div class="quest-day-stamp"><time id="growthQuestDate">等待今日计划</time><span class="quest-day-separator"> · </span><span id="growthQuestCount">—</span></div></div>
+            <div id="questQuickCreate" class="quest-quick-create" hidden><input id="questQuickTitle" maxlength="160" placeholder="为下一版本的自己安排一个使命…" aria-label="快捷使命名称"><button id="questCreate" type="button">创建使命</button></div>
+            <div class="quest-day-intro"><h3 id="growthQuestHeadline">给下一版本的自己，留一步行动。</h3><p id="growthQuestRemaining">尚无使命计划</p><p id="growthQuestFocus" class="quest-focus">按自己的目标安排使命。</p></div>
+            <p id="growthQuestSource" class="growth-source">来源：本地计划与行动记录</p>
+            <div id="growthActionProgress" class="growth-action-progress" hidden>
+              <div class="quest-progress-top"><div class="growth-action-progress-head"><span id="growthActionProgressLabel">尚无行动</span><strong id="growthActionPercent">0%</strong></div><div id="growthActionBar" class="growth-action-bar" role="progressbar" aria-label="每日使命记录进度" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0"><div id="growthActionFill"></div></div></div>
+              <p id="growthActionSummary">记录真实行动。</p><div id="genesisQuestStage" class="genesis-quest-stage"></div><p class="quest-stage-hint">点击使命放入行动之火，再敲击铁砧记录完成。也可以使用下方完成按钮。</p>
+            </div>
+            <div class="quest-timeline-heading"><h3>使命时间轴</h3><span>按计划时间顺序</span></div>
+            <div id="growthQuestList" class="growth-list quest-timeline" role="list" aria-label="每日使命时间轴"><p class="genesis-empty">正在读取使命状态。</p></div>
+            <a href="#quests" class="growth-action-all" id="growthActionAll">查看全部每日使命 →</a><p id="growthActionFeedback" class="growth-action-feedback" role="status" aria-live="polite"></p><section id="questBuilder" hidden aria-label="每日使命编辑器">
+<p id="questBuilderFeedback" role="status" aria-live="polite"></p>
+<div class="quest-plan-heading"><div><h3>我的使命计划</h3><p>当前成长规则 · 修改后不影响首次执行快照</p></div><button type="button" id="questHistoryOpen">执行历史</button></div>
+<label class="quest-plan-filter">查看计划<select id="questPlanFilter"><option value="active">启用中</option><option value="paused">已暂停</option><option value="deleted">已删除</option><option value="all">全部计划</option></select></label><div id="questPlanList"></div>
+</section>
+<dialog id="questHistory" class="genesis-editor-dialog" aria-labelledby="questHistoryTitle"><div class="quest-plan-heading"><div><p class="growth-eyebrow">行动档案</p><h2 id="questHistoryTitle">使命执行历史</h2></div><button type="button" id="questHistoryClose">关闭</button></div>
+<p>保留首次执行时的使命内容。过去记录仅供查看。</p>
+<form id="questHistoryFilter" class="quest-history-filters"><label>使命<select id="questHistoryQuest"></select></label><label>状态<select id="questHistoryStatus"><option value="">全部状态</option><option value="pending">待开始</option><option value="in_progress">进行中</option><option value="completed">已完成</option></select></label><label>开始日期<input type="date" id="questHistoryFrom"></label><label>结束日期<input type="date" id="questHistoryTo"></label><button type="submit">查询记录</button></form>
+<p id="questHistoryFeedback" role="status" aria-live="polite"></p><div id="questHistoryList"></div><div class="quest-history-pagination"><button type="button" id="questHistoryPrevious">上一页</button><span id="questHistoryCount"></span><button type="button" id="questHistoryNext">下一页</button></div></dialog>
+<dialog id="questEditor" aria-labelledby="questEditorTitle"><form id="questForm">
+ <h2 id="questEditorTitle">创建使命</h2><p>为自己的目标，安排一步可以完成的行动。</p>
+ <label>使命名称<input id="questTitleInput" required maxlength="160" placeholder="例如：学习 AI Agent"></label><label>使命描述<textarea id="questDescriptionInput" maxlength="2000" rows="3" placeholder="这项使命如何帮助你向长期目标前进？"></textarea></label>
+ <div class="quest-form-grid"><label>成长维度<select id="questTypeInput"><option value="learning">学习</option><option value="body">身体</option><option value="creation">创造</option><option value="life">生活</option></select></label><label>时间<input id="questTimeInput" type="time"></label>
+ <label>预计时长（分钟）<input id="questDurationInput" type="number" min="1" max="600" step="1" placeholder="可留空"></label><label>重复<select id="questRepeatInput"><option value="once">一次</option><option value="daily">每天</option><option value="weekly">每周</option></select></label></div>
+ <label id="questDateField">执行日期<input id="questDateInput" type="date"></label>
+ <fieldset id="questWeekdays" hidden><legend>每周执行日期</legend><label><input type="checkbox" name="questWeekday" value="1">周一</label><label><input type="checkbox" name="questWeekday" value="2">周二</label><label><input type="checkbox" name="questWeekday" value="3">周三</label><label><input type="checkbox" name="questWeekday" value="4">周四</label><label><input type="checkbox" name="questWeekday" value="5">周五</label><label><input type="checkbox" name="questWeekday" value="6">周六</label><label><input type="checkbox" name="questWeekday" value="0">周日</label></fieldset>
+ <label>关联目标<select id="questGoalInput"><option value="">暂不关联</option></select></label><label>关联项目（可选）<select id="questProjectInput"><option value="">暂不关联</option></select></label>
+ <p id="questEditorError" role="alert"></p><div class="quest-form-actions"><button type="button" id="questEditorCancel">取消</button><button type="submit" id="questEditorSave">保存使命</button></div>
+</form></dialog>
+<dialog id="questDelete" aria-labelledby="questDeleteTitle"><h2 id="questDeleteTitle">删除使命</h2><p>将“<strong id="questDeleteName"></strong>”移出每日使命？</p><p>历史行动将保留，可在使命计划中恢复。</p><div class="quest-form-actions"><button id="questDeleteCancel" type="button">取消删除</button><button id="questDeleteConfirm" type="button">确认删除</button></div></dialog><div class="growth-state-legend" aria-label="行动状态说明"><span>待开始</span><span>进行中</span><span>已完成</span><span class="is-reserved">已沉淀 · 后续接入</span></div><p class="growth-hint">状态只在你主动操作并保存成功后改变。复盘和资产关联将在后续接入。</p></article>
+          <article class="glass growth-card"><div class="growth-card-head"><h2>最近成长</h2><a href="#vault">查看资产库 →</a></div><p id="growthRecordSource" class="growth-source">来源：Genesis 成长记录</p><div id="growthRecent" class="growth-list"><p class="genesis-empty">正在读取成长记录。</p></div></article>
+          <article class="glass growth-card"><div class="growth-card-head"><h2>能力积累</h2><span class="growth-mark">✦</span></div><p class="growth-source">记录相关成果和证据，不评定专业能力强弱</p><div id="growthCapabilities" class="growth-list"><p class="genesis-empty">尚未建立能力积累关联。</p></div></article>
+        </div>
+        <article class="glass growth-card growth-training"><div class="growth-card-head"><h2>行动维度</h2><span id="growthAttrSource" class="growth-source">今日计划的完成比例</span></div><div id="growthAttributes"><p class="genesis-empty">行动计划尚未接入。</p></div></article>
+        <article class="glass growth-card growth-project-block"><div class="growth-card-head"><h2>继续创造</h2><a href="#vault">进入成长资产库 →</a></div><p id="growthProjectSource" class="growth-source">来源：Genesis 项目仓库</p><div id="growthProjects" class="growth-projects"><p class="genesis-empty">正在读取项目。</p></div></article>
+      </section>
+      <section id="growthSkills" aria-label="我的成长路线" hidden>
+        <div class="growth-tree-toolbar"><p>每一条枝干，是你选择培养的方向。<br>让实践留下项目，让经验结成资产。</p><div class="growth-tree-controls"><button id="skillExpandAll" class="growth-tree-secondary" type="button" disabled>展开全部</button><button id="skillCollapseAll" class="growth-tree-secondary" type="button" disabled>收起分支</button><button id="skillCreate" class="skill-primary" type="button" disabled>创建技能</button></div></div>
+        <div class="skill-chain" aria-label="成长路线关联"><span>长期目标</span><i aria-hidden="true">→</i><span>技能</span><i aria-hidden="true">→</i><span>使命</span><i aria-hidden="true">→</i><span>项目</span><i aria-hidden="true">→</i><span>资产</span></div>
+        <ul class="growth-tree-legend" aria-label="用户设置的技能阶段"><li data-status="not_started"><span aria-hidden="true"></span>尚未开始</li><li data-status="learning"><span aria-hidden="true"></span>学习中</li><li data-status="practicing"><span aria-hidden="true"></span>实践中</li><li data-status="mastered"><span aria-hidden="true"></span>已掌握</li></ul><p class="growth-tree-note">状态由你设置，关联数量记录积累，不代表能力评级。</p>
+        <article class="glass skill-tree-panel growth-tree-panel"><p class="growth-tree-mobile-note">点击节点查看详情，使用分支按钮逐层展开。</p><div id="skillTreeNodes"><p class="genesis-empty">正在读取成长之树。</p></div></article>
+        <p id="skillFeedback" role="status" aria-live="polite"></p>
+      </section>
+      <section id="growthVault" aria-label="成长资产库" hidden>    <section class="section genesis-dashboard glass" id="genesisDashboard" aria-labelledby="genesisDashboardTitle">
+      <div class="genesis-head">
+        <div>
+          <span class="genesis-kicker">GENESIS VAULT · 项目与成长证据</span>
+          <h2 id="genesisDashboardTitle">成长资产库</h2>
+          <p class="genesis-subtitle">项目仓库保存你正在创造的东西，成长记录保存每一次可复用的进步。</p>
+        </div>
+        <span class="genesis-sync" id="genesisSyncState">等待读取</span>
+      </div>
+      <div class="genesis-stats" aria-label="成长资产概览">
+        <article class="genesis-stat"><span class="genesis-stat-label">进行中的项目</span><strong id="genesisProjectCount">—</strong><span class="genesis-stat-note">正在推进</span></article>
+        <article class="genesis-stat"><span class="genesis-stat-label">成长记录</span><strong id="genesisRecordCount">—</strong><span class="genesis-stat-note">可回看的记录</span></article>
+        <article class="genesis-stat genesis-stat-accent"><span class="genesis-stat-label">平均进度</span><strong id="genesisProgress">—</strong><span class="genesis-stat-note">项目平均进度</span></article>
+      </div>
+      <div class="genesis-modules">
+        <article class="genesis-module">
+          <div class="genesis-module-head"><div><span class="genesis-module-kicker">模块 01</span><h3>项目仓库</h3></div><span class="genesis-module-mark">◈</span></div>
+          <div class="genesis-project-list" id="genesisProjectList"><p class="genesis-empty">还没有项目，先把一个想法写下来。</p></div>
+        </article>
+        <article class="genesis-module">
+          <div class="genesis-module-head"><div><span class="genesis-module-kicker">模块 02</span><h3>成长记录</h3></div><span class="genesis-module-mark">✦</span></div>
+          <div class="genesis-record-list" id="genesisRecordList"><p class="genesis-empty">每一次复盘，都会成为下一次行动的素材。</p></div>
+        </article>
+      </div>
+      <div class="genesis-detail" id="genesisProjectDetail" hidden>
+        <div class="genesis-detail-head">
+          <div><span class="genesis-module-kicker">项目详情</span><h3 id="genesisDetailTitle">项目详情</h3><p id="genesisDetailSummary" class="genesis-detail-summary"></p></div>
+          <button type="button" class="genesis-detail-close" id="genesisDetailClose" aria-label="关闭项目详情">关闭</button>
+        </div>
+        <div class="genesis-detail-grid">
+          <section class="genesis-detail-section"><div class="genesis-detail-section-head"><h4>发展时间线</h4><span id="genesisTimelineCount"></span></div><div id="genesisTimeline" class="genesis-timeline"></div></section>
+          <section class="genesis-detail-section"><div class="genesis-detail-section-head"><h4>项目复盘与学习成果</h4></div><div id="genesisReviews" class="genesis-review-list"></div></section>
+          <section class="genesis-detail-section genesis-detail-assets"><div class="genesis-detail-section-head"><h4>个人资产 · 可复用资产</h4><span id="genesisAssetCount"></span></div><div id="genesisAssets" class="genesis-asset-list"></div></section>
+        </div>
+      </div>
+    </section>
+
+<article class="glass growth-card"><h2>可复用资产</h2><div id="growthVaultAssets" class="growth-list"></div></article></section>
+      <section id="growthSettings" class="glass growth-card" aria-label="设置与数据来源" hidden><section class="genesis-settings-role" data-local-editor hidden><h2>我的角色资料</h2><p class="growth-source">角色资料默认私有，只保存主动修改。</p><div id="genesisSettingsIdentity" class="genesis-settings-identity"></div><button type="button" data-edit-profile>编辑我的角色</button></section><h2>数据来源与连接</h2><div id="growthSources"></div><p class="growth-hint">个人档案、目标和决策继续保留。行动完成只保存状态，复盘和资产由独立同步流程保存。</p></section>
+      <section id="genesisPwaSettings" class="glass growth-card" hidden aria-label="应用安装"><h2>安装 Genesis 到桌面</h2><p id="genesisPwaStatus" class="growth-source" role="status">可从手机浏览器菜单添加到主屏幕。</p><button id="genesisInstall" type="button" class="skill-primary" hidden>安装 Genesis</button><p class="growth-hint">只缓存公共静态资源，个人资料、使命和资产需要联网读取。首次在安装后的应用中打开可能需要登录。</p></section>
+      <p id="genesisEditorFeedback" role="status" aria-live="polite"></p><footer class="growth-footer">Genesis AI（新生） · 让行动留下记录，让经验成为资产</footer>
+    </main>
+  </div>
+  <dialog id="dashboardAssetDetail" class="genesis-editor-dialog" aria-labelledby="dashboardAssetTitle"><div class="skill-close-heading"><div><p class="growth-eyebrow">可复用资产 · 只读查看</p><h2 id="dashboardAssetTitle">资产详情</h2></div><button id="dashboardAssetClose" type="button">关闭</button></div><p id="dashboardAssetDate" class="growth-source"></p><div id="dashboardAssetContent" class="dashboard-asset-content"></div><a href="#vault" id="dashboardAssetVault" class="dashboard-link">进入成长资产库 →</a></dialog>
+  <dialog id="skillDetail" class="genesis-editor-dialog growth-skill-detail" aria-labelledby="skillDetailTitle">
+    <div class="skill-close-heading"><div><p class="growth-eyebrow">我的成长路线</p><h2 id="skillDetailTitle">技能详情</h2></div><button id="skillDetailClose" type="button">关闭</button></div>
+    <p id="skillDetailDescription" class="skill-description"></p>
+    <dl class="skill-detail-meta"><div><dt>分类</dt><dd id="skillDetailCategory"></dd></div><div><dt>当前状态</dt><dd id="skillDetailStatus"></dd></div><div><dt>父节点</dt><dd id="skillDetailParent"></dd></div></dl>
+    <p class="skill-edit-hint">状态由你自行设置，不代表系统评估。成长路线与关联内容默认私有。</p>
+    <div class="skill-detail-actions"><button id="skillDetailEdit" type="button">编辑技能</button><button id="skillDetailChild" type="button">添加子技能</button><button id="skillDetailConnect" type="button">添加关联</button></div>
+    <div id="skillDetailLinks"></div><p id="skillDetailFeedback" role="alert"></p>
+  </dialog>
+  <dialog id="skillEditor" class="genesis-editor-dialog" aria-labelledby="skillEditorTitle"><form id="skillForm">
+    <p class="growth-eyebrow">GENESIS · 成长路线</p><h2 id="skillEditorTitle">创建技能</h2>
+    <div class="genesis-edit-fields"><label>技能名称<input id="skillName" required maxlength="160" placeholder="例如：AI 应用开发"></label><label>描述<textarea id="skillDescription" rows="3" maxlength="2000" placeholder="你希望培养什么？如何实践？"></textarea></label><label>分类<input id="skillCategory" maxlength="60" placeholder="例如：技术、产品、身体与精力"></label><label>父节点<select id="skillParent"><option value="">根节点</option></select></label><label>状态<select id="skillStatus"><option value="not_started">尚未开始</option><option value="learning">学习中</option><option value="practicing">实践中</option><option value="mastered">已掌握</option></select></label></div>
+    <p class="skill-edit-hint">这是你为自己设定的路线与阶段。保存只修改当前技能节点。</p><p id="skillEditorError" role="alert"></p>
+    <div class="quest-form-actions"><button id="skillEditorCancel" type="button">取消</button><button id="skillEditorSave" type="submit">保存技能</button></div>
+  </form></dialog>
+  <dialog id="skillLinkEditor" class="genesis-editor-dialog" aria-labelledby="skillLinkTitle"><form id="skillLinkForm">
+    <p class="growth-eyebrow">连接行动与成果</p><h2 id="skillLinkTitle">添加关联</h2><div class="genesis-edit-fields"><label>关联类型<select id="skillLinkType"><option value="goal">目标</option><option value="quest">使命</option><option value="project">项目</option><option value="asset">资产</option></select></label><label>已有记录<select id="skillLinkTarget" required></select></label></div>
+    <p class="skill-edit-hint">关联已有内容，不会修改原记录或自动改变技能状态。</p><p id="skillLinkError" role="alert"></p><div class="quest-form-actions"><button id="skillLinkCancel" type="button">取消</button><button id="skillLinkSave" type="submit">保存关联</button></div>
+  </form></dialog>
+  <dialog id="skillReference" class="genesis-editor-dialog" aria-labelledby="skillReferenceTitle"><div class="skill-close-heading"><h2 id="skillReferenceTitle">关联内容</h2><button id="skillReferenceClose" type="button">关闭</button></div><p class="skill-edit-hint">关联内容只读</p><p id="skillReferenceText"></p></dialog>
+  <dialog id="genesisEditDialog" class="genesis-editor-dialog" aria-labelledby="genesisEditTitle"><form id="genesisEditForm"><p class="growth-eyebrow">GENESIS · 我的成长档案</p><h2 id="genesisEditTitle">编辑资料</h2><p id="genesisEditProvenance" class="growth-source"></p><div id="genesisEditFields" class="genesis-edit-fields"></div><details><summary>来源证据（只读）</summary><pre id="genesisEditEvidence"></pre></details><p id="genesisEditError" role="alert"></p><div class="quest-form-actions"><button id="genesisEditCancel" type="button">关闭</button><button id="genesisEditSwitch" type="button" hidden>编辑</button><button id="genesisEditSave" type="submit">保存修改</button></div></form></dialog>
+
+<script defer src="/genesis-pwa.js?v=1"></script><script src="/forge-stage.js?v=2"></script><script src="/effigy.js"></script><script src="/genesis-vault.js?v=2"></script><script type="module" src="/genesis-home.js?v=11"></script>
+</body></html>

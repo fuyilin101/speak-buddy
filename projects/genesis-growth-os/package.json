@@ -1,0 +1,41 @@
+{
+  "name": "the-forge",
+  "version": "1.0.0",
+  "description": "The Forge — a self-hosted, single-user habit tracker that turns your goals into an RPG (XP, levels, attributes, quests, streaks, weekly boss).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "genesis:connector": "node agent/genesis-connector.mjs",
+    "genesis:sync": "node agent/genesis-sync.mjs",
+    "genesis:cloud:build": "node scripts/build-genesis-cloud.mjs",
+    "test:genesis-worker": "node test/genesis-worker.mjs",
+    "dev": "DB_PATH=/tmp/forge-dev.sqlite PORT=3099 node server.js",
+    "review": "sh -c '[ -f .env.review ] && . ./.env.review; DB_PATH=/tmp/forge-review.sqlite PORT=3098 DISABLE_REMINDERS=1 node server.js'",
+    "test": "node test/engine-regression.js && node test/auth-setup.js && node test/api-validation.js && node test/backup-restore.js && node test/reminders.js && node test/plan-budget.js && node test/quick-capture.js && node test/boss-hit-guard.js && node test/anvil-weight.js && node test/pursuit-tree.js && node test/embers.js && node test/record-archive.js && node test/boss-roster.js && node test/quest-carry.js && node test/anvil-clock.js && node test/rank-ladder.js && node test/dashboard-summary.js && node test/docker-payload.js && node test/quest-history.js && node test/reliable-saving.js && node test/genesis-home.mjs && node test/genesis-actions.mjs && node test/genesis-fusion.mjs && node test/genesis-worker.mjs && node test/genesis-quests.mjs && node test/genesis-editor.mjs && node test/genesis-quest-stage.mjs && node test/genesis-skills.mjs && node test/genesis-dashboard.mjs && node test/genesis-pwa.mjs && node test/genesis-cloud-store.mjs && node test/genesis-cloud-api.mjs && node test/genesis-cloud-migrations.mjs && node test/genesis-owner-auth.mjs && node test/genesis-owner-setup-ui.mjs && node test/genesis-growth-tree.mjs",
+    "check:syntax": "node --check server.js && node --check dashboard-summary.js && node --check send-reminders.js && node --check public/app.js && node --check public/extras.js && node --check public/effigy.js && node --check public/forge-stage.js && node --check public/fx-stage.js && node --check public/fx.js && node --check public/game.js && node --check public/login.js && node --check public/modules.js && node --check public/setup.js && node --check public/sw.js && node --check test/engine-regression.js && node --check test/auth-setup.js && node --check test/api-validation.js && node --check test/backup-restore.js && node --check test/reminders.js && node --check test/plan-budget.js && node --check test/quick-capture.js && node --check test/boss-hit-guard.js && node --check test/anvil-weight.js && node --check test/pursuit-tree.js && node --check test/embers.js && node --check test/record-archive.js && node --check test/boss-roster.js && node --check test/quest-carry.js && node --check test/anvil-clock.js && node --check test/rank-ladder.js && node --check test/dashboard-summary.js && node --check test/docker-payload.js && node --check test/quest-history.js && node --check sync-reminders.js && node --check test/reliable-saving.js && node --check test/restore-drill.js && node --check public/genesis-home.js && node --check public/genesis-cloud.js && node --check public/genesis-vault.js && node --check public/genesis-home-model.mjs && node --check scripts/build-genesis-cloud.mjs && node --check test/genesis-home.mjs && node --check public/genesis-actions.js && node --check public/genesis-action-model.mjs && node --check test/genesis-actions.mjs && node --check public/genesis-character.js && node --check public/genesis-action-view.mjs && node --check test/genesis-fusion.mjs && node --check genesis-quests.cjs && node --check public/genesis-quest-builder.js && node --check public/genesis-quest-history.js && node --check test/genesis-quests.mjs && node --check genesis-editor.cjs && node --check public/genesis-editor.js && node --check public/genesis-quest-stage.js && node --check test/genesis-editor.mjs && node --check test/genesis-quest-stage.mjs && node --check genesis-skills.cjs && node --check public/genesis-skills.js && node --check public/genesis-skill-model.mjs && node --check test/genesis-skills.mjs && node --check public/genesis-dashboard.js && node --check public/genesis-dashboard-model.mjs && node --check test/genesis-dashboard.mjs && node --check public/genesis-pwa.js && node --check test/genesis-pwa.mjs && node --check worker/store.js && node --check worker/domain.js && node --check worker/quests.js && node --check worker/skills.js && node --check worker/editor.js && node --check worker/agent.js && node --check worker/management.js && node --check test/genesis-cloud-store.mjs && node --check test/genesis-cloud-api.mjs && node --check test/genesis-cloud-migrations.mjs && node --check worker/owner-auth.js && node --check test/genesis-owner-auth.mjs && node --check test/genesis-owner-setup-ui.mjs && node --check public/genesis-growth-tree.mjs && node --check test/genesis-growth-tree.mjs",
+    "test:genesis-home": "node test/genesis-home.mjs",
+    "test:genesis-actions": "node test/genesis-actions.mjs",
+    "test:genesis-fusion": "node test/genesis-fusion.mjs",
+    "test:genesis-quests": "node test/genesis-quests.mjs",
+    "test:genesis-editor": "node test/genesis-editor.mjs",
+    "test:genesis-skills": "node test/genesis-skills.mjs",
+    "test:genesis-dashboard": "node test/genesis-dashboard.mjs",
+    "test:genesis-pwa": "node test/genesis-pwa.mjs",
+    "test:genesis-cloud-store": "node test/genesis-cloud-store.mjs",
+    "test:genesis-cloud-api": "node test/genesis-cloud-api.mjs",
+    "test:genesis-cloud-migrations": "node test/genesis-cloud-migrations.mjs",
+    "test:genesis-owner-auth": "node test/genesis-owner-auth.mjs && node test/genesis-owner-setup-ui.mjs",
+    "test:genesis-growth-tree": "node test/genesis-growth-tree.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.19.2",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "wrangler": "^4.149.0",
+    "miniflare": "5.20261006.1-alpha",
+    "esbuild": "0.28.2"
+  }
+}

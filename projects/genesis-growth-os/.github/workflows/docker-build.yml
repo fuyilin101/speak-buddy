@@ -1,0 +1,44 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docker:
+    name: Test and Docker image build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Syntax check
+        run: npm run check:syntax
+      - name: Regression test
+        run: npm test
+      - name: Build image
+        run: docker build -t the-forge:ci .
+      - name: Smoke test (boots and serves login)
+        run: |
+          docker run -d --name forge-ci -e APP_PASSWORD=ci -p 3007:3007 the-forge:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3007/login.html >/dev/null; then echo "up"; exit 0; fi
+            sleep 1
+          done
+          echo "server did not come up"; docker logs forge-ci; exit 1
+      # The check used to read `$(...)` inside double quotes, which the RUNNER's
+      # shell expanded before docker exec ever ran — so it inspected the runner's
+      # own PID 1 (root) instead of the container's, and `test "0" != 0` failed on
+      # every push since the step was written. The command is passed to docker exec
+      # as argv now, with no container-side shell to expand anything twice.
+      - name: Runtime user is non-root
+        run: |
+          uid=$(docker exec forge-ci awk '/^Uid:/ {print $2}' /proc/1/status)
+          echo "container PID 1 runs as uid ${uid:-<empty>}"
+          test -n "$uid" && test "$uid" != "0"

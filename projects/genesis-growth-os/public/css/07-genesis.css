@@ -1,0 +1,63 @@
+/* Genesis AI phase 1 dashboard layer. It uses the existing glass/card tokens so
+   the original Forge UI remains the visual system underneath the rebrand. */
+.genesis-dashboard { padding: clamp(22px, 3vw, 36px); margin-top: 18px; }
+.genesis-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 24px; }
+.genesis-kicker, .genesis-module-kicker { color: var(--muted, #9295a5); font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.genesis-dashboard h2 { margin: 8px 0 6px; font-size: clamp(22px, 3vw, 34px); letter-spacing: -.03em; }
+.genesis-subtitle { margin: 0; max-width: 650px; color: var(--muted, #9295a5); line-height: 1.6; }
+.genesis-sync { border: 1px solid color-mix(in srgb, var(--accent, #7c8cff) 35%, transparent); border-radius: 999px; color: var(--accent, #9aa7ff); font-size: 11px; padding: 7px 11px; white-space: nowrap; }
+.genesis-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.genesis-stat { background: color-mix(in srgb, var(--panel, #12131a) 78%, transparent); border: 1px solid var(--line, rgba(255,255,255,.08)); border-radius: 14px; padding: 16px; }
+.genesis-stat-accent { border-color: color-mix(in srgb, var(--accent, #7c8cff) 35%, transparent); }
+.genesis-stat-label, .genesis-stat-note { display: block; color: var(--muted, #9295a5); font-size: 11px; }
+.genesis-stat strong { display: block; margin: 8px 0 2px; font-size: 30px; letter-spacing: -.04em; }
+.genesis-modules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.genesis-module { min-height: 180px; border: 1px solid var(--line, rgba(255,255,255,.08)); border-radius: 14px; padding: 18px; background: rgba(0,0,0,.12); }
+.genesis-module-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.genesis-module h3 { margin: 5px 0 0; font-size: 19px; }
+.genesis-module-mark { color: var(--accent, #9aa7ff); font-size: 20px; }
+.genesis-empty { margin: 0; color: var(--muted, #9295a5); font-size: 13px; }
+.genesis-project, .genesis-record { padding: 10px 0; border-top: 1px solid var(--line, rgba(255,255,255,.07)); }
+.genesis-project:first-child, .genesis-record:first-child { border-top: 0; padding-top: 0; }
+.genesis-project-row, .genesis-record-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.genesis-project-name, .genesis-record-title { font-size: 13px; font-weight: 700; }
+.genesis-project-meta, .genesis-record-meta { color: var(--muted, #9295a5); font-size: 11px; margin-top: 4px; }
+.genesis-progress { width: 76px; height: 5px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.1); }
+.genesis-progress > span { display: block; height: 100%; border-radius: inherit; background: var(--accent, #7c8cff); }
+.genesis-record-content { color: var(--muted, #9295a5); font-size: 12px; line-height: 1.45; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.genesis-project-button { display: block; width: 100%; border: 0; border-top: 1px solid var(--line, rgba(255,255,255,.07)); border-radius: 0; padding: 10px 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.genesis-project-button:first-child { border-top: 0; padding-top: 0; }
+.genesis-project-button:hover, .genesis-project-button:focus-visible { color: var(--accent, #9aa7ff); outline: none; }
+.genesis-project-button:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #7c8cff) 45%, transparent); border-radius: 8px; }
+.genesis-detail { margin-top: 18px; border: 1px solid color-mix(in srgb, var(--accent, #7c8cff) 28%, var(--line, rgba(255,255,255,.08))); border-radius: 16px; padding: 18px; background: color-mix(in srgb, var(--panel, #12131a) 82%, transparent); }
+.genesis-detail.is-loading { opacity: .62; }
+.genesis-detail-head, .genesis-detail-section-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.genesis-detail-head h3 { margin: 5px 0 4px; font-size: 22px; }
+.genesis-detail-summary { margin: 0; color: var(--muted, #9295a5); font-size: 12px; line-height: 1.5; }
+.genesis-detail-close { border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 999px; padding: 7px 12px; background: transparent; color: var(--muted, #9295a5); cursor: pointer; }
+.genesis-detail-close:hover, .genesis-detail-close:focus-visible { color: var(--text, #fff); border-color: var(--accent, #7c8cff); }
+.genesis-detail-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; margin-top: 18px; }
+.genesis-detail-section { min-width: 0; border: 1px solid var(--line, rgba(255,255,255,.08)); border-radius: 12px; padding: 14px; background: rgba(0,0,0,.12); }
+.genesis-detail-assets { grid-column: 1 / -1; }
+.genesis-detail-section h4 { margin: 0; font-size: 14px; }
+.genesis-detail-section-head > span { color: var(--muted, #9295a5); font-size: 11px; }
+.genesis-timeline, .genesis-review-list, .genesis-asset-list { margin-top: 12px; }
+.genesis-timeline-item { position: relative; display: grid; grid-template-columns: 12px 1fr; gap: 10px; padding: 0 0 14px; }
+.genesis-timeline-item:not(:last-child)::before { content: ""; position: absolute; left: 5px; top: 12px; bottom: 0; width: 1px; background: color-mix(in srgb, var(--accent, #7c8cff) 40%, transparent); }
+.genesis-timeline-dot { position: relative; z-index: 1; width: 10px; height: 10px; margin-top: 3px; border: 2px solid var(--accent, #7c8cff); border-radius: 50%; background: var(--panel, #12131a); }
+.genesis-timeline-meta, .genesis-review-meta { color: var(--muted, #9295a5); font-size: 10px; }
+.genesis-timeline-item h5, .genesis-review-card h5, .genesis-asset-card h5 { margin: 4px 0; font-size: 13px; }
+.genesis-timeline-item p, .genesis-review-card p, .genesis-asset-card p { margin: 0; color: var(--muted, #b0b2bf); font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+.genesis-review-card, .genesis-asset-card { border-top: 1px solid var(--line, rgba(255,255,255,.07)); padding: 10px 0; }
+.genesis-review-card:first-child, .genesis-asset-card:first-child { border-top: 0; padding-top: 0; }
+.genesis-review-field { margin-top: 8px; }
+.genesis-review-field strong { color: var(--text, #fff); font-size: 11px; }
+.genesis-review-field ul { margin: 3px 0 0 16px; padding: 0; color: var(--muted, #b0b2bf); font-size: 12px; line-height: 1.5; }
+.genesis-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.genesis-tags span { border: 1px solid color-mix(in srgb, var(--accent, #7c8cff) 28%, transparent); border-radius: 999px; padding: 3px 7px; color: var(--accent, #9aa7ff); font-size: 10px; }
+@media (max-width: 700px) {
+  .genesis-head { display: block; }
+  .genesis-sync { display: inline-block; margin-top: 12px; }
+  .genesis-stats, .genesis-modules, .genesis-detail-grid { grid-template-columns: 1fr; }
+  .genesis-detail-assets { grid-column: auto; }
+}
