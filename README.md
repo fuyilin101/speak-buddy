@@ -45,7 +45,3 @@ npm run deploy
 ## 使用通义千问（阿里云百炼）
 
 项目使用百炼的 OpenAI 兼容接口：文字默认 `qwen-plus`，图片默认 `qwen3-vl-plus`。北京地域使用 `https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`；如果使用业务空间或其他地域，请替换为百炼控制台提供的对应地址。
-
-## 个人成长系统：Genesis Growth OS
-
-本仓库另收录 [Genesis AI 个人成长操作系统](./projects/genesis-growth-os/)，包含驾驶舱、每日使命、成长之树、项目/资产库、Agent Connector 和 PWA。代码、测试、迁移和中文文档位于独立项目目录；原有 Speak Buddy 根目录入口保持不变。
